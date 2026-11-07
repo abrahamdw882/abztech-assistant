@@ -3,6 +3,7 @@ package com.abztech.assistant.engine;
 public enum IntentType {
     // Conversational & Persona
     GREETING,
+    WAKE_WORD,
     HOW_ARE_YOU,
     WHATS_UP,
     USER_STATUS,

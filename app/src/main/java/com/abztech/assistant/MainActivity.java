@@ -49,6 +49,7 @@ public class MainActivity extends AppCompatActivity implements
     private SpeechRecognitionManager speechManager;
     private TextToSpeechManager ttsManager;
     private NotesDatabaseHelper notesDb;
+    private long ttsStartTime = 0;
 
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
 
@@ -255,9 +256,7 @@ public class MainActivity extends AppCompatActivity implements
     }
 
     private void processUserQuery(String query) {
-        // Stop audio playback and pause microphone so Jarvis doesn't hear itself
         ttsManager.stop();
-        speechManager.pauseListening();
 
         setDialogue("YOU", query);
         visualizerView.setState(AssistantState.THINKING);
@@ -270,10 +269,19 @@ public class MainActivity extends AppCompatActivity implements
                         ? response.actionTag
                         : "J.A.R.V.I.S.";
                 setDialogue(tag, response.displayText);
+
+                ttsStartTime = System.currentTimeMillis();
                 ttsManager.speak(response.spokenText);
 
                 if (response.intentType == IntentType.OVERLAY_MODE) {
                     mainHandler.postDelayed(this::launchOverlayMode, 1200);
+                } else if (response.intentType == IntentType.WAKE_WORD) {
+                    // Hotword activated: keep visualizer listening and ensure microphone is waiting
+                    visualizerView.setState(AssistantState.LISTENING);
+                    speechManager.resumeListening();
+                } else {
+                    // Keep speech recognition armed for natural voice barge-in
+                    speechManager.resumeListening();
                 }
             });
         }).start();
@@ -296,6 +304,10 @@ public class MainActivity extends AppCompatActivity implements
 
     @Override
     public void onBeginningOfSpeech() {
+        // Voice Barge-in: if assistant is speaking and user begins speaking, cut off TTS immediately!
+        if (ttsManager != null && ttsManager.isSpeaking() && (System.currentTimeMillis() - ttsStartTime > 250)) {
+            ttsManager.stop();
+        }
         visualizerView.setState(AssistantState.LISTENING);
         setDialogue("YOU", "Listening...");
     }
@@ -317,6 +329,10 @@ public class MainActivity extends AppCompatActivity implements
 
     @Override
     public void onPartialResults(String partialText) {
+        // Voice Barge-in interruption
+        if (ttsManager != null && ttsManager.isSpeaking()) {
+            ttsManager.stop();
+        }
         if (partialText != null && !partialText.trim().isEmpty()) {
             setDialogue("YOU", partialText);
         }

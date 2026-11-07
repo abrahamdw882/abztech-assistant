@@ -81,7 +81,11 @@ public class SpeechRecognitionManager implements RecognitionListener {
 
         try {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && SpeechRecognizer.isOnDeviceRecognitionAvailable(context)) {
-                speechRecognizer = SpeechRecognizer.createOnDeviceSpeechRecognizer(context);
+                try {
+                    speechRecognizer = SpeechRecognizer.createOnDeviceSpeechRecognizer(context);
+                } catch (Exception e) {
+                    speechRecognizer = SpeechRecognizer.createSpeechRecognizer(context);
+                }
             } else {
                 speechRecognizer = SpeechRecognizer.createSpeechRecognizer(context);
             }
@@ -90,7 +94,12 @@ public class SpeechRecognitionManager implements RecognitionListener {
                 speechRecognizer.setRecognitionListener(this);
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            try {
+                speechRecognizer = SpeechRecognizer.createSpeechRecognizer(context);
+                if (speechRecognizer != null) {
+                    speechRecognizer.setRecognitionListener(this);
+                }
+            } catch (Exception ignored) {}
         }
     }
 
@@ -133,6 +142,10 @@ public class SpeechRecognitionManager implements RecognitionListener {
         intent.putExtra(RecognizerIntent.EXTRA_PARTIAL_RESULTS, true);
         intent.putExtra(RecognizerIntent.EXTRA_MAX_RESULTS, 3);
         intent.putExtra(RecognizerIntent.EXTRA_PREFER_OFFLINE, true);
+        // Generous silence threshold so the assistant waits patiently for the user to speak
+        intent.putExtra(RecognizerIntent.EXTRA_SPEECH_INPUT_COMPLETE_SILENCE_LENGTH_MILLIS, 3500L);
+        intent.putExtra(RecognizerIntent.EXTRA_SPEECH_INPUT_POSSIBLY_COMPLETE_SILENCE_LENGTH_MILLIS, 3000L);
+        intent.putExtra(RecognizerIntent.EXTRA_SPEECH_INPUT_MINIMUM_LENGTH_MILLIS, 2500L);
 
         try {
             speechRecognizer.startListening(intent);

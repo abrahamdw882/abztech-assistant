@@ -167,6 +167,10 @@ public class TextToSpeechManager implements TextToSpeech.OnInitListener {
         }
     }
 
+    public boolean isSpeaking() {
+        return tts != null && isInitialized && tts.isSpeaking();
+    }
+
     public void stop() {
         if (tts != null && isInitialized) {
             try {

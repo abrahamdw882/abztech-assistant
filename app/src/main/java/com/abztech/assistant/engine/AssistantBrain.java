@@ -61,6 +61,9 @@ public class AssistantBrain {
         IntentResult intent = classifier.classify(userQuery, memory);
 
         switch (intent.getType()) {
+            case WAKE_WORD:
+                return handleWakeWord();
+
             case GREETING:
                 return handleGreeting();
 
@@ -288,6 +291,18 @@ public class AssistantBrain {
                         "UNKNOWN"
                 );
         }
+    }
+
+    private Response handleWakeWord() {
+        String[] acknowledgements = new String[]{
+                "I'm listening.",
+                "Yes, I'm right here.",
+                "Go ahead, I'm listening.",
+                "Online. What do you need?",
+                "Yes? What's on your mind?"
+        };
+        String pick = acknowledgements[random.nextInt(acknowledgements.length)];
+        return new Response(pick, pick, "LISTENING", IntentType.WAKE_WORD);
     }
 
     private Response handleGreeting() {

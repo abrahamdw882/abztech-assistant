@@ -61,6 +61,7 @@ public class JarvisOverlayService extends Service implements
     private TextToSpeechManager ttsManager;
     private AssistantBrain assistantBrain;
     private NotesDatabaseHelper notesDb;
+    private long ttsStartTime = 0;
 
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
     public static boolean isRunning = false;
@@ -272,7 +273,6 @@ public class JarvisOverlayService extends Service implements
 
     private void processQuery(String query) {
         if (ttsManager != null) ttsManager.stop();
-        if (speechManager != null) speechManager.pauseListening();
 
         setDialogue("YOU", query);
         if (visualizerView != null) visualizerView.setState(AssistantState.THINKING);
@@ -285,7 +285,15 @@ public class JarvisOverlayService extends Service implements
                         ? response.actionTag
                         : "J.A.R.V.I.S.";
                 setDialogue(tag, response.displayText);
+                ttsStartTime = System.currentTimeMillis();
                 if (ttsManager != null) ttsManager.speak(response.spokenText);
+
+                if (response.intentType == com.abztech.assistant.engine.IntentType.WAKE_WORD) {
+                    if (visualizerView != null) visualizerView.setState(AssistantState.LISTENING);
+                    if (speechManager != null) speechManager.resumeListening();
+                } else {
+                    if (speechManager != null) speechManager.resumeListening();
+                }
             });
         }).start();
     }
@@ -307,6 +315,10 @@ public class JarvisOverlayService extends Service implements
 
     @Override
     public void onBeginningOfSpeech() {
+        // Voice Barge-in: if assistant is speaking and user speaks, cut off TTS immediately!
+        if (ttsManager != null && ttsManager.isSpeaking() && (System.currentTimeMillis() - ttsStartTime > 250)) {
+            ttsManager.stop();
+        }
         if (visualizerView != null) visualizerView.setState(AssistantState.LISTENING);
         setDialogue("YOU", "Listening...");
     }
@@ -328,6 +340,10 @@ public class JarvisOverlayService extends Service implements
 
     @Override
     public void onPartialResults(String partialText) {
+        // Voice Barge-in: user spoke while TTS was active
+        if (ttsManager != null && ttsManager.isSpeaking()) {
+            ttsManager.stop();
+        }
         if (partialText != null && !partialText.trim().isEmpty()) {
             setDialogue("YOU", partialText);
         }

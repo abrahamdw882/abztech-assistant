@@ -29,7 +29,7 @@ public class IntentClassifier {
         text = text.replaceAll("^(?:wake\\s+up|listen\\s+up|are\\s+you\\s+there)\\s*,?\\s*", "").trim();
         text = text.replaceAll("[?!.,]+$", "").trim();
         if (text.isEmpty() || matchesAny(text, "^(jarvis|nova|siri)$")) {
-            return new IntentResult(IntentType.GREETING, 1.0f, rawText);
+            return new IntentResult(IntentType.WAKE_WORD, 1.0f, rawText);
         }
 
         // 1. GREETINGS & CASUAL HUMAN SMALL TALK
@@ -107,13 +107,13 @@ public class IntentClassifier {
         }
 
         // 5. TIME & DATE
-        if (matchesAny(text, ".*(what\\s+time\\s+is\\s+it|tell\\s+(me\\s+)?the\\s+time|current\\s+time|what's\\s+the\\s+time).*")) {
+        if (matchesAny(text, ".*(what\\s+time\\s+is\\s+it|tell\\s+(me\\s+)?the\\s+time|current\\s+time|what's\\s+the\\s+time|whats\\s+the\\s+time|what\\s+is\\s+the\\s+time|time\\s+now|the\\s+time|time)$")) {
             return new IntentResult(IntentType.TIME, 1.0f, rawText);
         }
-        if (matchesAny(text, ".*(what\\s+day\\s+is\\s+it|what\\s+day\\s+is\\s+today|day\\s+of\\s+the\\s+week).*")) {
+        if (matchesAny(text, ".*(what\\s+day\\s+is\\s+it|what\\s+day\\s+is\\s+today|what\\s+day\\s+today|day\\s+of\\s+the\\s+week|what\\s+day).*")) {
             return new IntentResult(IntentType.DAY_OF_WEEK, 1.0f, rawText);
         }
-        if (matchesAny(text, ".*(what\\s+is\\s+today's\\s+date|what\\s+date\\s+is\\s+it|current\\s+date|what's\\s+the\\s+date).*")) {
+        if (matchesAny(text, ".*(today'?s?\\s+date|what(?:'s|\\s+is)?\\s+(?:the\\s+)?(?:current\\s+)?date|what\\s+date\\s+is\\s+(?:it|today)|tell\\s+(me\\s+)?(?:the\\s+|today'?s?\\s+)?date|current\\s+date|date\\s+today|whats\\s+the\\s+date|what\\s+is\\s+the\\s+date|date).*")) {
             return new IntentResult(IntentType.DATE, 1.0f, rawText);
         }
 

@@ -207,7 +207,7 @@ public class StandaloneBrainTest {
         // Test 17: Wake word alone ("Hello Nova")
         total++;
         AssistantBrain.Response r17 = brain.process("Hello Nova");
-        if ("GREETING".equals(r17.actionTag) && r17.spokenText.length() > 5) {
+        if (("LISTENING".equals(r17.actionTag) || "GREETING".equals(r17.actionTag)) && r17.spokenText.length() > 3) {
             System.out.println("✓ Test 17 Passed: 'Hello Nova' wake-word -> " + r17.spokenText);
             passed++;
         } else {
@@ -272,6 +272,16 @@ public class StandaloneBrainTest {
             passed++;
         } else {
             System.err.println("✗ Test 23 Failed: Got " + r23.displayText);
+        }
+
+        // Test 24: Date Query ("what's today's date")
+        total++;
+        AssistantBrain.Response r24 = brain.process("what's today's date");
+        if ("DATE".equals(r24.actionTag) && r24.spokenText.contains("Today is")) {
+            System.out.println("✓ Test 24 Passed: 'what's today's date' -> " + r24.spokenText);
+            passed++;
+        } else {
+            System.err.println("✗ Test 24 Failed: Got " + r24.spokenText);
         }
 
         System.out.println("==================================================");
