@@ -204,6 +204,36 @@ public class StandaloneBrainTest {
             System.err.println("✗ Test 16 Failed: Got " + r16.spokenText);
         }
 
+        // Test 17: Wake word alone ("Hello Nova")
+        total++;
+        AssistantBrain.Response r17 = brain.process("Hello Nova");
+        if ("GREETING".equals(r17.actionTag) && r17.spokenText.contains("How can I help you")) {
+            System.out.println("✓ Test 17 Passed: 'Hello Nova' wake-word -> " + r17.spokenText);
+            passed++;
+        } else {
+            System.err.println("✗ Test 17 Failed: Got " + r17.spokenText);
+        }
+
+        // Test 18: Hands-free App Launch ("Hello Nova open YouTube")
+        total++;
+        AssistantBrain.Response r18 = brain.process("Hello Nova open YouTube");
+        if ("LAUNCH_APP".equals(r18.actionTag) && r18.displayText.contains("YouTube")) {
+            System.out.println("✓ Test 18 Passed: 'Hello Nova open YouTube' -> " + r18.displayText);
+            passed++;
+        } else {
+            System.err.println("✗ Test 18 Failed: Got " + r18.displayText);
+        }
+
+        // Test 19: Hands-free Hardware ("Hello Nova turn on flashlight")
+        total++;
+        AssistantBrain.Response r19 = brain.process("Hello Nova turn on flashlight");
+        if (mockActions.torch && "TORCH_ON".equals(r19.actionTag)) {
+            System.out.println("✓ Test 19 Passed: 'Hello Nova turn on flashlight' -> " + r19.displayText);
+            passed++;
+        } else {
+            System.err.println("✗ Test 19 Failed: Got " + r19.displayText);
+        }
+
         System.out.println("==================================================");
         System.out.println("RESULTS: " + passed + " / " + total + " TESTS PASSED (100% OFFLINE)");
         System.out.println("==================================================");

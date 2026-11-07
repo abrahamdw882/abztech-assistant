@@ -5,6 +5,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.view.View;
+import android.view.WindowManager;
 import android.view.inputmethod.EditorInfo;
 import android.widget.EditText;
 import android.widget.ImageButton;
@@ -13,6 +14,7 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -45,6 +47,7 @@ public class MainActivity extends AppCompatActivity implements
     private FloatingActionButton btnMic;
     private ImageButton btnSend;
     private ImageButton btnMute;
+    private TextView btnHandsFree;
     private EditText editInput;
     private TextView textStatus;
     private ChipGroup chipGroupSuggestions;
@@ -54,12 +57,16 @@ public class MainActivity extends AppCompatActivity implements
     private TextToSpeechManager ttsManager;
     private NotesDatabaseHelper notesDb;
 
+    private boolean isHandsFreeActive = true;
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        // Keep screen awake while in Hands-Free mode so Nova can hear "Hello Nova"
+        getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 
         initViews();
         initCoreEngine();
@@ -69,8 +76,18 @@ public class MainActivity extends AppCompatActivity implements
         // Request audio & hardware permissions
         PermissionHelper.requestNecessaryPermissions(this);
 
-        // Add initial Siri greeting
-        addBotMessage("Hi! I'm your offline assistant. Tap the mic or type to get started.", "OFFLINE_READY");
+        // Add initial greeting
+        addBotMessage("Hi! Hands-free mode is ACTIVE. Just say 'Hello Nova' or give any command without clicking!", "HANDS_FREE_ACTIVE");
+
+        // If audio permission is already granted, start listening immediately
+        if (PermissionHelper.hasRecordAudioPermission(this)) {
+            mainHandler.postDelayed(() -> {
+                if (speechManager != null && isHandsFreeActive) {
+                    speechManager.startListening();
+                    setAssistantState(AssistantState.LISTENING, "🎙️ Listening for 'Hello Nova'...");
+                }
+            }, 600);
+        }
     }
 
     private void initViews() {
@@ -79,6 +96,7 @@ public class MainActivity extends AppCompatActivity implements
         btnMic = findViewById(R.id.btnMic);
         btnSend = findViewById(R.id.btnSend);
         btnMute = findViewById(R.id.btnMute);
+        btnHandsFree = findViewById(R.id.btnHandsFree);
         editInput = findViewById(R.id.editInput);
         textStatus = findViewById(R.id.textStatus);
         chipGroupSuggestions = findViewById(R.id.chipGroupSuggestions);
@@ -98,18 +116,19 @@ public class MainActivity extends AppCompatActivity implements
 
         ttsManager = new TextToSpeechManager(this, this);
         speechManager = new SpeechRecognitionManager(this, this);
+        speechManager.setContinuousMode(true);
     }
 
     private void initSuggestions() {
         String[] suggestions = new String[]{
+                "👋 Hello Nova",
                 "🔦 Turn on flashlight",
+                "🚀 Open YouTube",
                 "⏰ Set timer for 5 minutes",
                 "🧮 What is 15% of 240?",
                 "🔋 Battery status",
                 "😂 Tell me a joke",
-                "💡 Tell me a fun fact",
-                "📝 What are my notes?",
-                "🚀 What can you do?"
+                "📝 What are my notes?"
         };
 
         chipGroupSuggestions.removeAllViews();
@@ -119,7 +138,6 @@ public class MainActivity extends AppCompatActivity implements
             chip.setCheckable(false);
             chip.setClickable(true);
             chip.setOnClickListener(v -> {
-                // Strip emoji prefix when submitting query
                 String clean = s.replaceAll("^[^\u0000-\u007F]+\\s*", "");
                 processUserQuery(clean);
             });
@@ -128,10 +146,14 @@ public class MainActivity extends AppCompatActivity implements
     }
 
     private void setupListeners() {
+        // Hands-Free Toggle Pill
+        btnHandsFree.setOnClickListener(v -> toggleHandsFreeMode());
+
+        // Microphone Button
         btnMic.setOnClickListener(v -> {
             if (speechManager.isListening()) {
                 speechManager.stopListening();
-                setAssistantState(AssistantState.IDLE, "Tap to speak");
+                setAssistantState(AssistantState.IDLE, "Tap mic to speak");
             } else {
                 if (!PermissionHelper.hasRecordAudioPermission(this)) {
                     PermissionHelper.requestNecessaryPermissions(this);
@@ -160,6 +182,27 @@ public class MainActivity extends AppCompatActivity implements
         });
     }
 
+    private void toggleHandsFreeMode() {
+        isHandsFreeActive = !isHandsFreeActive;
+        speechManager.setContinuousMode(isHandsFreeActive);
+
+        if (isHandsFreeActive) {
+            btnHandsFree.setText("🎙️ HANDS-FREE: ON");
+            btnHandsFree.setTextColor(ContextCompat.getColor(this, R.color.siri_cyan));
+            getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+            speechManager.startListening();
+            setAssistantState(AssistantState.LISTENING, "🎙️ Listening for 'Hello Nova'...");
+            Toast.makeText(this, "Hands-Free Activated: Just say 'Hello Nova'!", Toast.LENGTH_SHORT).show();
+        } else {
+            btnHandsFree.setText("🎙️ TAP TO TALK");
+            btnHandsFree.setTextColor(ContextCompat.getColor(this, R.color.text_muted));
+            getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+            speechManager.stopListening();
+            setAssistantState(AssistantState.IDLE, "Tap mic to speak");
+            Toast.makeText(this, "Hands-Free Paused", Toast.LENGTH_SHORT).show();
+        }
+    }
+
     private void submitTypedQuery() {
         String text = editInput.getText().toString().trim();
         if (!text.isEmpty()) {
@@ -169,10 +212,12 @@ public class MainActivity extends AppCompatActivity implements
     }
 
     private void processUserQuery(String query) {
+        // Pause listening loop while assistant processes and speaks so it doesn't hear itself
+        speechManager.pauseListening();
+
         addUserMessage(query);
         setAssistantState(AssistantState.THINKING, "Thinking...");
 
-        // Process in background thread to guarantee buttery-smooth 60fps UI
         new Thread(() -> {
             AssistantBrain.Response response = assistantBrain.process(query);
 
@@ -203,7 +248,11 @@ public class MainActivity extends AppCompatActivity implements
     // SpeechRecognitionManager Callbacks
     @Override
     public void onReadyForSpeech() {
-        setAssistantState(AssistantState.LISTENING, "Listening...");
+        if (isHandsFreeActive) {
+            setAssistantState(AssistantState.LISTENING, "🎙️ Listening for 'Hello Nova'...");
+        } else {
+            setAssistantState(AssistantState.LISTENING, "Listening...");
+        }
     }
 
     @Override
@@ -221,7 +270,12 @@ public class MainActivity extends AppCompatActivity implements
         if (recognizedText != null && !recognizedText.trim().isEmpty()) {
             processUserQuery(recognizedText);
         } else {
-            setAssistantState(AssistantState.IDLE, "Tap mic to speak");
+            if (isHandsFreeActive) {
+                speechManager.resumeListening();
+                setAssistantState(AssistantState.LISTENING, "🎙️ Listening for 'Hello Nova'...");
+            } else {
+                setAssistantState(AssistantState.IDLE, "Tap mic to speak");
+            }
         }
     }
 
@@ -234,12 +288,14 @@ public class MainActivity extends AppCompatActivity implements
 
     @Override
     public void onError(int errorCode, String errorMessage) {
-        setAssistantState(AssistantState.IDLE, errorMessage);
+        if (!isHandsFreeActive) {
+            setAssistantState(AssistantState.IDLE, errorMessage);
+        }
     }
 
     @Override
     public void onEndOfSpeech() {
-        setAssistantState(AssistantState.THINKING, "Processing speech...");
+        setAssistantState(AssistantState.THINKING, "Processing...");
     }
 
     // TextToSpeech Callbacks
@@ -250,12 +306,26 @@ public class MainActivity extends AppCompatActivity implements
 
     @Override
     public void onSpeechCompleted() {
-        mainHandler.post(() -> setAssistantState(AssistantState.IDLE, "Tap mic to speak"));
+        mainHandler.post(() -> {
+            if (isHandsFreeActive) {
+                setAssistantState(AssistantState.LISTENING, "🎙️ Listening for 'Hello Nova'...");
+                speechManager.resumeListening();
+            } else {
+                setAssistantState(AssistantState.IDLE, "Tap mic to speak");
+            }
+        });
     }
 
     @Override
     public void onSpeechError(String error) {
-        mainHandler.post(() -> setAssistantState(AssistantState.IDLE, "Tap mic to speak"));
+        mainHandler.post(() -> {
+            if (isHandsFreeActive) {
+                speechManager.resumeListening();
+                setAssistantState(AssistantState.LISTENING, "🎙️ Listening for 'Hello Nova'...");
+            } else {
+                setAssistantState(AssistantState.IDLE, "Tap mic to speak");
+            }
+        });
     }
 
     @Override
@@ -270,9 +340,28 @@ public class MainActivity extends AppCompatActivity implements
                     break;
                 }
             }
-            if (!audioGranted) {
-                Toast.makeText(this, "Microphone permission is recommended for voice commands.", Toast.LENGTH_LONG).show();
+            if (audioGranted && isHandsFreeActive) {
+                speechManager.startListening();
+                setAssistantState(AssistantState.LISTENING, "🎙️ Listening for 'Hello Nova'...");
+            } else if (!audioGranted) {
+                Toast.makeText(this, "Microphone permission is required for voice activation.", Toast.LENGTH_LONG).show();
             }
+        }
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        if (isHandsFreeActive && PermissionHelper.hasRecordAudioPermission(this)) {
+            speechManager.resumeListening();
+        }
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        if (speechManager != null) {
+            speechManager.pauseListening();
         }
     }
 
