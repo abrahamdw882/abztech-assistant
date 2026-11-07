@@ -126,7 +126,6 @@ public class ActionDispatcher implements IActionDispatcher {
                 Build.MANUFACTURER, Build.MODEL, Build.VERSION.RELEASE, Build.VERSION.SDK_INT, freeGb);
     }
 
-    public boolean launchApp(String targetAppName) {
     private String findPackageForApp(String appName) {
         if (appName == null || appName.trim().isEmpty()) return null;
         PackageManager pm = context.getPackageManager();
