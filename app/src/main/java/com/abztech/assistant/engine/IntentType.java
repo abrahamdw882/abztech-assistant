@@ -39,6 +39,8 @@ public enum IntentType {
 
     // App & Navigation
     OPEN_APP,
+    CLOSE_APP,
+    GO_HOME,
     SETTINGS_WIFI,
     SETTINGS_BLUETOOTH,
     SETTINGS_GENERAL,

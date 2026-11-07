@@ -1,5 +1,6 @@
 package com.abztech.assistant.engine;
 
+import android.app.ActivityManager;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.ApplicationInfo;
@@ -198,6 +199,40 @@ public class ActionDispatcher implements IActionDispatcher {
             }
         }
         return false;
+    }
+
+    @Override
+    public boolean closeApp(String appName) {
+        if (appName == null || appName.trim().isEmpty() || "this app".equalsIgnoreCase(appName.trim()) || "the app".equalsIgnoreCase(appName.trim()) || "current app".equalsIgnoreCase(appName.trim())) {
+            goToHomeScreen();
+            return true;
+        }
+
+        ResolveInfo match = findBestMatchingApp(appName);
+        if (match != null && match.activityInfo != null) {
+            String pkg = match.activityInfo.packageName;
+            try {
+                ActivityManager am = (ActivityManager) context.getSystemService(Context.ACTIVITY_SERVICE);
+                if (am != null) {
+                    am.killBackgroundProcesses(pkg);
+                }
+            } catch (Exception ignored) {}
+            goToHomeScreen();
+            return true;
+        }
+
+        goToHomeScreen();
+        return false;
+    }
+
+    @Override
+    public void goToHomeScreen() {
+        try {
+            Intent homeIntent = new Intent(Intent.ACTION_MAIN);
+            homeIntent.addCategory(Intent.CATEGORY_HOME);
+            homeIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            context.startActivity(homeIntent);
+        } catch (Exception ignored) {}
     }
 
     public boolean setTimer(int seconds) {

@@ -19,6 +19,8 @@ public interface IActionDispatcher {
     String getDeviceInfo();
 
     boolean launchApp(String appName);
+    boolean closeApp(String appName);
+    void goToHomeScreen();
     boolean setTimer(int seconds);
     boolean setAlarm(int hour, int minute, String message);
     void openSettings(String action);

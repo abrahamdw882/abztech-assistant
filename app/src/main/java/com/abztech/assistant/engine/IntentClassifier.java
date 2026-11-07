@@ -181,6 +181,30 @@ public class IntentClassifier {
                     .putSlot("appName", targetApp);
         }
 
+        // 10. CLOSE APP & HOME NAVIGATION
+        Pattern closeAppPattern = Pattern.compile("^(?:please\\s+|can\\s+you\\s+|could\\s+you\\s+)?(?:close\\s+down|close|kill|exit|quit|stop|terminate)\\s+(?:the\\s+app\\s+|the\\s+application\\s+|app\\s+)?([a-zA-Z0-9 ._'-]+)$");
+        Matcher closeAppMatcher = closeAppPattern.matcher(text);
+        if (closeAppMatcher.find()) {
+            String targetAppLower = closeAppMatcher.group(1).trim();
+            if (targetAppLower.equalsIgnoreCase("all") || targetAppLower.equalsIgnoreCase("all apps") || targetAppLower.equalsIgnoreCase("everything")) {
+                return new IntentResult(IntentType.GO_HOME, 1.0f, rawText);
+            }
+            if (targetAppLower.equalsIgnoreCase("this") || targetAppLower.equalsIgnoreCase("this app") || targetAppLower.equalsIgnoreCase("the app") || targetAppLower.equalsIgnoreCase("it") || targetAppLower.isEmpty()) {
+                return new IntentResult(IntentType.CLOSE_APP, 1.0f, rawText).putSlot("appName", "current app");
+            }
+
+            Pattern rawAppPattern = Pattern.compile("(?i)^(?:hey\\s+|ok\\s+|hello\\s+|hi\\s+)?(?:siri|nova|jarvis|assistant)?\\s*,?\\s*(?:please\\s+|can\\s+you\\s+|could\\s+you\\s+)?(?:close\\s+down|close|kill|exit|quit|stop|terminate)\\s+(?:the\\s+app\\s+|the\\s+application\\s+|app\\s+)?([a-zA-Z0-9 ._'-]+)[?!.,]*$");
+            Matcher rawAppMatcher = rawAppPattern.matcher(rawText.trim());
+            String targetApp = (rawAppMatcher.find()) ? rawAppMatcher.group(1).trim() : targetAppLower;
+
+            return new IntentResult(IntentType.CLOSE_APP, 1.0f, rawText)
+                    .putSlot("appName", targetApp);
+        }
+
+        if (matchesAny(text, "^(go\\s+home|go\\s+to\\s+home\\s+screen|home\\s+screen|minimize|minimize\\s+all|close\\s+all)$")) {
+            return new IntentResult(IntentType.GO_HOME, 1.0f, rawText);
+        }
+
         // 9. TELEPHONY & MESSAGING
         Pattern callPattern = Pattern.compile("^(?:call|dial|phone)\\s+([a-zA-Z0-9 +]+)$");
         Matcher callMatcher = callPattern.matcher(text);

@@ -211,6 +211,24 @@ public class AssistantBrain {
                 return new Response("I couldn't find an installed app named " + appName + " on this device.",
                         "[NOT FOUND: \"" + appName + "\"]", "APP_NOT_FOUND");
 
+            case CLOSE_APP:
+                String closeTarget = intent.getSlot("appName");
+                if (actionDispatcher != null) {
+                    boolean found = actionDispatcher.closeApp(closeTarget);
+                    if (found && closeTarget != null && !closeTarget.equalsIgnoreCase("current app")) {
+                        return new Response("Closing " + closeTarget + ".", "[CLOSED: " + closeTarget + "]", "CLOSE_APP");
+                    } else {
+                        return new Response("Closing app and returning to home screen.", "[CLOSED]", "CLOSE_APP");
+                    }
+                }
+                return new Response("Closing app.", "[CLOSED]", "CLOSE_APP");
+
+            case GO_HOME:
+                if (actionDispatcher != null) {
+                    actionDispatcher.goToHomeScreen();
+                }
+                return new Response("Going to home screen.", "[HOME]", "GO_HOME");
+
             case SETTINGS_WIFI:
                 if (actionDispatcher != null) actionDispatcher.openSettings("android.settings.WIFI_SETTINGS");
                 return new Response("Opening Wi-Fi settings.", "[SETTINGS: WI-FI]", "SETTINGS");

@@ -20,6 +20,8 @@ public class StandaloneBrainTest {
         @Override public boolean isDeviceCharging() { return false; }
         @Override public String getDeviceInfo() { return "Device: Nova Phone\nAndroid: 14"; }
         @Override public boolean launchApp(String appName) { return true; }
+        @Override public boolean closeApp(String appName) { return true; }
+        @Override public void goToHomeScreen() {}
         @Override public boolean setTimer(int seconds) { return true; }
         @Override public boolean setAlarm(int hour, int minute, String message) { return true; }
         @Override public void openSettings(String action) {}
@@ -282,6 +284,26 @@ public class StandaloneBrainTest {
             passed++;
         } else {
             System.err.println("✗ Test 24 Failed: Got " + r24.spokenText);
+        }
+
+        // Test 25: Close App ("close YouTube")
+        total++;
+        AssistantBrain.Response r25 = brain.process("close YouTube");
+        if ("CLOSE_APP".equals(r25.actionTag) && r25.displayText.contains("YouTube")) {
+            System.out.println("✓ Test 25 Passed: 'close YouTube' -> " + r25.displayText);
+            passed++;
+        } else {
+            System.err.println("✗ Test 25 Failed: Got " + r25.displayText);
+        }
+
+        // Test 26: Go Home / Close Current App ("go to home screen")
+        total++;
+        AssistantBrain.Response r26 = brain.process("go to home screen");
+        if ("GO_HOME".equals(r26.actionTag) && "[HOME]".equals(r26.displayText)) {
+            System.out.println("✓ Test 26 Passed: 'go to home screen' -> " + r26.displayText);
+            passed++;
+        } else {
+            System.err.println("✗ Test 26 Failed: Got " + r26.displayText);
         }
 
         System.out.println("==================================================");
