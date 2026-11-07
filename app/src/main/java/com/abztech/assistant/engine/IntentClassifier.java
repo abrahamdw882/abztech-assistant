@@ -152,7 +152,12 @@ public class IntentClassifier {
             return new IntentResult(IntentType.CLEAR_NOTES, 1.0f, rawText);
         }
 
-        // 8. APP LAUNCHER
+        // 8. DISPLAY OVER OTHER APPS / FLOATING OVERLAY MODE
+        if (matchesAny(text, ".*(display\\s+over\\s+(the\\s+)?screen|display\\s+over\\s+other\\s+apps|overlay\\s+mode|floating\\s+mode|float\\s+on\\s+screen|floating\\s+arc\\s+reactor|floating\\s+window).*")) {
+            return new IntentResult(IntentType.OVERLAY_MODE, 1.0f, rawText);
+        }
+
+        // 9. APP LAUNCHER
         Pattern openAppPattern = Pattern.compile("^(?:please\\s+|can\\s+you\\s+|could\\s+you\\s+)?(?:open\\s+up|open|launch|start|run|play)\\s+(?:the\\s+app\\s+|the\\s+application\\s+|app\\s+)?([a-zA-Z0-9 ._'-]+)$");
         Matcher openAppMatcher = openAppPattern.matcher(text);
         if (openAppMatcher.find()) {

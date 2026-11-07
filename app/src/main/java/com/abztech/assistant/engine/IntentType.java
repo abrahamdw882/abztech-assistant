@@ -41,6 +41,7 @@ public enum IntentType {
     SETTINGS_WIFI,
     SETTINGS_BLUETOOTH,
     SETTINGS_GENERAL,
+    OVERLAY_MODE,
 
     // Scheduling & Alarms
     SET_TIMER,

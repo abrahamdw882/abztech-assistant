@@ -15,15 +15,21 @@ public class AssistantBrain {
         public final String spokenText;
         public final String displayText;
         public final String actionTag;
+        public final IntentType intentType;
 
-        public Response(String spokenText, String displayText, String actionTag) {
+        public Response(String spokenText, String displayText, String actionTag, IntentType intentType) {
             this.spokenText = spokenText;
             this.displayText = displayText;
             this.actionTag = actionTag;
+            this.intentType = intentType;
+        }
+
+        public Response(String spokenText, String displayText, String actionTag) {
+            this(spokenText, displayText, actionTag, null);
         }
 
         public Response(String text) {
-            this(text, text, null);
+            this(text, text, null, null);
         }
     }
 
@@ -213,6 +219,14 @@ public class AssistantBrain {
             case SETTINGS_GENERAL:
                 if (actionDispatcher != null) actionDispatcher.openSettings("android.settings.SETTINGS");
                 return new Response("Opening Settings.", "[SETTINGS]", "SETTINGS");
+
+            case OVERLAY_MODE:
+                return new Response(
+                        "Switching to display over screen mode.",
+                        "[OVERLAY: ACTIVE]",
+                        "OVERLAY",
+                        IntentType.OVERLAY_MODE
+                );
 
             // NOTES
             case TAKE_NOTE:

@@ -6,7 +6,7 @@
     android:orientation="vertical"
     android:background="@color/bg_dark">
 
-    <!-- Top Minimalist Bar: ONLY the sound/mute toggle icon -->
+    <!-- Top Minimalist Bar: Overlay Mode and Sound/Mute toggle icons -->
     <RelativeLayout
         android:id="@+id/topBar"
         android:layout_width="match_parent"
@@ -16,17 +16,34 @@
         android:paddingStart="16dp"
         android:paddingEnd="16dp">
 
-        <ImageButton
-            android:id="@+id/btnMute"
-            android:layout_width="44dp"
-            android:layout_height="44dp"
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
             android:layout_alignParentEnd="true"
             android:layout_centerVertical="true"
-            android:background="?attr/selectableItemBackgroundBorderless"
-            android:contentDescription="Toggle Mute"
-            android:src="@drawable/ic_volume"
-            android:tint="@color/jarvis_cyan"
-            app:tint="@color/jarvis_cyan" />
+            android:orientation="horizontal">
+
+            <ImageButton
+                android:id="@+id/btnOverlay"
+                android:layout_width="44dp"
+                android:layout_height="44dp"
+                android:layout_marginEnd="6dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="Display Over Screen"
+                android:src="@drawable/ic_overlay"
+                android:tint="@color/jarvis_cyan"
+                app:tint="@color/jarvis_cyan" />
+
+            <ImageButton
+                android:id="@+id/btnMute"
+                android:layout_width="44dp"
+                android:layout_height="44dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="Toggle Mute"
+                android:src="@drawable/ic_volume"
+                android:tint="@color/jarvis_cyan"
+                app:tint="@color/jarvis_cyan" />
+        </LinearLayout>
     </RelativeLayout>
 
     <!-- Center Stage: Arc Reactor Visualizer Dominating The Screen -->

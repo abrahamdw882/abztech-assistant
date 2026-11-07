@@ -3,8 +3,11 @@ package com.abztech.assistant.util;
 import android.Manifest;
 import android.app.Activity;
 import android.content.Context;
+import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.net.Uri;
 import android.os.Build;
+import android.provider.Settings;
 
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
@@ -15,9 +18,25 @@ import java.util.List;
 public class PermissionHelper {
 
     public static final int REQUEST_CODE_PERMISSIONS = 1001;
+    public static final int REQUEST_CODE_OVERLAY = 1002;
 
     public static boolean hasRecordAudioPermission(Context context) {
         return ContextCompat.checkSelfPermission(context, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED;
+    }
+
+    public static boolean hasOverlayPermission(Context context) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            return Settings.canDrawOverlays(context);
+        }
+        return true;
+    }
+
+    public static void requestOverlayPermission(Activity activity) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            Intent intent = new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
+                    Uri.parse("package:" + activity.getPackageName()));
+            activity.startActivityForResult(intent, REQUEST_CODE_OVERLAY);
+        }
     }
 
     public static void requestNecessaryPermissions(Activity activity) {

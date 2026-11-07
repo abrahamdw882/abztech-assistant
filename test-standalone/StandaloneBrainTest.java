@@ -264,6 +264,16 @@ public class StandaloneBrainTest {
             System.err.println("✗ Test 22 Failed: Got " + r22.spokenText);
         }
 
+        // Test 23: Display Over Other Apps / Floating Arc Reactor
+        total++;
+        AssistantBrain.Response r23 = brain.process("display over screen");
+        if (r23.intentType == IntentType.OVERLAY_MODE && "OVERLAY".equals(r23.actionTag)) {
+            System.out.println("✓ Test 23 Passed: 'Display over screen' -> " + r23.displayText);
+            passed++;
+        } else {
+            System.err.println("✗ Test 23 Failed: Got " + r23.displayText);
+        }
+
         System.out.println("==================================================");
         System.out.println("RESULTS: " + passed + " / " + total + " TESTS PASSED (100% OFFLINE)");
         System.out.println("==================================================");

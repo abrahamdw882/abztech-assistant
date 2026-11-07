@@ -1,6 +1,8 @@
 package com.abztech.assistant;
 
+import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -17,6 +19,8 @@ import androidx.appcompat.app.AppCompatActivity;
 import com.abztech.assistant.data.NotesDatabaseHelper;
 import com.abztech.assistant.engine.ActionDispatcher;
 import com.abztech.assistant.engine.AssistantBrain;
+import com.abztech.assistant.engine.IntentType;
+import com.abztech.assistant.service.JarvisOverlayService;
 import com.abztech.assistant.speech.SpeechRecognitionManager;
 import com.abztech.assistant.speech.TextToSpeechManager;
 import com.abztech.assistant.ui.AssistantState;
@@ -37,6 +41,7 @@ public class MainActivity extends AppCompatActivity implements
     private FloatingActionButton btnMic;
     private ImageButton btnSend;
     private ImageButton btnMute;
+    private ImageButton btnOverlay;
     private EditText editInput;
     private ChipGroup chipGroupSuggestions;
 
@@ -84,6 +89,7 @@ public class MainActivity extends AppCompatActivity implements
         btnMic = findViewById(R.id.btnMic);
         btnSend = findViewById(R.id.btnSend);
         btnMute = findViewById(R.id.btnMute);
+        btnOverlay = findViewById(R.id.btnOverlay);
         editInput = findViewById(R.id.editInput);
         chipGroupSuggestions = findViewById(R.id.chipGroupSuggestions);
     }
@@ -100,6 +106,7 @@ public class MainActivity extends AppCompatActivity implements
 
     private void initSuggestions() {
         String[] suggestions = new String[]{
+                "Display Over Screen",
                 "How are you?",
                 "What's up?",
                 "Flashlight",
@@ -122,7 +129,13 @@ public class MainActivity extends AppCompatActivity implements
             chip.setChipStrokeColorResource(R.color.chip_stroke);
             chip.setChipStrokeWidth(1.5f);
             chip.setTextColor(getColor(R.color.text_primary));
-            chip.setOnClickListener(v -> processUserQuery(s));
+            chip.setOnClickListener(v -> {
+                if ("Display Over Screen".equalsIgnoreCase(s)) {
+                    launchOverlayMode();
+                } else {
+                    processUserQuery(s);
+                }
+            });
             chipGroupSuggestions.addView(chip);
         }
     }
@@ -150,6 +163,47 @@ public class MainActivity extends AppCompatActivity implements
             btnMute.setImageResource(muted ? R.drawable.ic_volume_off : R.drawable.ic_volume);
             Toast.makeText(this, muted ? "Audio output muted" : "Audio output online", Toast.LENGTH_SHORT).show();
         });
+
+        // Launch floating overlay over other apps
+        btnOverlay.setOnClickListener(v -> launchOverlayMode());
+    }
+
+    public void launchOverlayMode() {
+        if (!PermissionHelper.hasOverlayPermission(this)) {
+            Toast.makeText(this, "Please enable 'Display over other apps' to activate floating Arc Reactor.", Toast.LENGTH_LONG).show();
+            PermissionHelper.requestOverlayPermission(this);
+            return;
+        }
+
+        // Pause speech & stop TTS in main activity so overlay service takes over cleanly
+        if (speechManager != null) {
+            speechManager.pauseListening();
+        }
+        if (ttsManager != null) {
+            ttsManager.stop();
+        }
+
+        Intent serviceIntent = new Intent(this, JarvisOverlayService.class);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            startForegroundService(serviceIntent);
+        } else {
+            startService(serviceIntent);
+        }
+
+        moveTaskToBack(true);
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == PermissionHelper.REQUEST_CODE_OVERLAY) {
+            if (PermissionHelper.hasOverlayPermission(this)) {
+                Toast.makeText(this, "Overlay permission granted. Launching floating mode.", Toast.LENGTH_SHORT).show();
+                launchOverlayMode();
+            } else {
+                Toast.makeText(this, "Permission required to display floating Arc Reactor over other apps.", Toast.LENGTH_LONG).show();
+            }
+        }
     }
 
     /**
@@ -198,6 +252,10 @@ public class MainActivity extends AppCompatActivity implements
                         : "J.A.R.V.I.S.";
                 setDialogue(tag, response.displayText);
                 ttsManager.speak(response.spokenText);
+
+                if (response.intentType == IntentType.OVERLAY_MODE) {
+                    mainHandler.postDelayed(this::launchOverlayMode, 1200);
+                }
             });
         }).start();
     }
@@ -301,6 +359,9 @@ public class MainActivity extends AppCompatActivity implements
     @Override
     protected void onResume() {
         super.onResume();
+        if (JarvisOverlayService.isRunning) {
+            stopService(new Intent(this, JarvisOverlayService.class));
+        }
         if (PermissionHelper.hasRecordAudioPermission(this)) {
             speechManager.resumeListening();
         }
