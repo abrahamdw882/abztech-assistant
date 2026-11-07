@@ -8,6 +8,7 @@ import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Build;
 import android.provider.Settings;
+import android.widget.Toast;
 
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
@@ -26,16 +27,35 @@ public class PermissionHelper {
 
     public static boolean hasOverlayPermission(Context context) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            return Settings.canDrawOverlays(context);
+            try {
+                return Settings.canDrawOverlays(context);
+            } catch (Exception e) {
+                return false;
+            }
         }
         return true;
     }
 
     public static void requestOverlayPermission(Activity activity) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            Intent intent = new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
-                    Uri.parse("package:" + activity.getPackageName()));
-            activity.startActivityForResult(intent, REQUEST_CODE_OVERLAY);
+            try {
+                Intent intent = new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
+                        Uri.parse("package:" + activity.getPackageName()));
+                activity.startActivityForResult(intent, REQUEST_CODE_OVERLAY);
+            } catch (Exception e) {
+                try {
+                    Intent fallbackIntent = new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION);
+                    activity.startActivityForResult(fallbackIntent, REQUEST_CODE_OVERLAY);
+                } catch (Exception e2) {
+                    try {
+                        Intent appSettings = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
+                                Uri.parse("package:" + activity.getPackageName()));
+                        activity.startActivityForResult(appSettings, REQUEST_CODE_OVERLAY);
+                    } catch (Exception ignored) {
+                        Toast.makeText(activity, "Please enable 'Display over other apps' in Settings.", Toast.LENGTH_LONG).show();
+                    }
+                }
+            }
         }
     }
 

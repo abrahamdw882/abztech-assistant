@@ -175,6 +175,12 @@ public class MainActivity extends AppCompatActivity implements
             return;
         }
 
+        if (!PermissionHelper.hasRecordAudioPermission(this)) {
+            Toast.makeText(this, "Microphone permission required for voice overlay.", Toast.LENGTH_SHORT).show();
+            PermissionHelper.requestNecessaryPermissions(this);
+            return;
+        }
+
         // Pause speech & stop TTS in main activity so overlay service takes over cleanly
         if (speechManager != null) {
             speechManager.pauseListening();
@@ -183,14 +189,27 @@ public class MainActivity extends AppCompatActivity implements
             ttsManager.stop();
         }
 
-        Intent serviceIntent = new Intent(this, JarvisOverlayService.class);
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            startForegroundService(serviceIntent);
-        } else {
-            startService(serviceIntent);
-        }
+        try {
+            Intent serviceIntent = new Intent(this, JarvisOverlayService.class);
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                startForegroundService(serviceIntent);
+            } else {
+                startService(serviceIntent);
+            }
 
-        moveTaskToBack(true);
+            // Postpone moveTaskToBack slightly so foreground service starts safely without Android 14 FGS background violation
+            mainHandler.postDelayed(() -> {
+                try {
+                    moveTaskToBack(true);
+                } catch (Exception ignored) {}
+            }, 350);
+        } catch (Exception e) {
+            try {
+                startService(new Intent(this, JarvisOverlayService.class));
+            } catch (Exception e2) {
+                Toast.makeText(this, "Could not start overlay: " + e2.getMessage(), Toast.LENGTH_LONG).show();
+            }
+        }
     }
 
     @Override

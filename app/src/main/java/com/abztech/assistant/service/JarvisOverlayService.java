@@ -13,6 +13,7 @@ import android.os.Build;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Looper;
+import android.provider.Settings;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
@@ -23,6 +24,7 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import androidx.annotation.Nullable;
+import androidx.appcompat.view.ContextThemeWrapper;
 import androidx.core.app.NotificationCompat;
 
 import com.abztech.assistant.MainActivity;
@@ -68,61 +70,92 @@ public class JarvisOverlayService extends Service implements
         super.onCreate();
         isRunning = true;
 
-        startForegroundServiceNotification();
-        initCoreEngine();
-        initOverlayWindow();
+        // Verify overlay permission before doing anything
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && !Settings.canDrawOverlays(this)) {
+            stopSelf();
+            return;
+        }
+
+        try {
+            startForegroundServiceNotification();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        try {
+            initCoreEngine();
+            initOverlayWindow();
+        } catch (Exception e) {
+            e.printStackTrace();
+            stopSelf();
+            return;
+        }
 
         // Greet user on overlay launch
         setDialogue("ONLINE", "Hey there! I'm floating right here. How can I help?");
 
-        // Start hands-free speech recognition if permission is available
+        // Start hands-free speech recognition if audio permission is granted
         if (PermissionHelper.hasRecordAudioPermission(this)) {
             mainHandler.postDelayed(() -> {
-                if (speechManager != null) {
-                    speechManager.startListening();
-                    visualizerView.setState(AssistantState.LISTENING);
+                try {
+                    if (speechManager != null) {
+                        speechManager.startListening();
+                        if (visualizerView != null) visualizerView.setState(AssistantState.LISTENING);
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
                 }
-            }, 500);
+            }, 600);
         }
     }
 
     private void startForegroundServiceNotification() {
-        NotificationManager manager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && manager != null) {
-            NotificationChannel channel = new NotificationChannel(
-                    CHANNEL_ID,
-                    "J.A.R.V.I.S. Overlay Service",
-                    NotificationManager.IMPORTANCE_LOW
-            );
-            channel.setDescription("Keeps the floating Arc Reactor assistant responsive over other apps.");
-            manager.createNotificationChannel(channel);
-        }
-
-        Intent notificationIntent = new Intent(this, MainActivity.class);
-        notificationIntent.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
-        PendingIntent pendingIntent = PendingIntent.getActivity(
-                this,
-                0,
-                notificationIntent,
-                Build.VERSION.SDK_INT >= Build.VERSION_CODES.M ? PendingIntent.FLAG_IMMUTABLE : 0
-        );
-
-        Notification notification = new NotificationCompat.Builder(this, CHANNEL_ID)
-                .setContentTitle("J.A.R.V.I.S. Floating Assistant")
-                .setContentText("Displaying over screen. Tap to open full app.")
-                .setSmallIcon(R.drawable.ic_mic)
-                .setContentIntent(pendingIntent)
-                .setOngoing(true)
-                .build();
-
         try {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            NotificationManager manager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && manager != null) {
+                NotificationChannel channel = new NotificationChannel(
+                        CHANNEL_ID,
+                        "J.A.R.V.I.S. Overlay Service",
+                        NotificationManager.IMPORTANCE_LOW
+                );
+                channel.setDescription("Keeps the floating Arc Reactor assistant responsive over other apps.");
+                manager.createNotificationChannel(channel);
+            }
+
+            Intent notificationIntent = new Intent(this, MainActivity.class);
+            notificationIntent.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
+            PendingIntent pendingIntent = PendingIntent.getActivity(
+                    this,
+                    0,
+                    notificationIntent,
+                    Build.VERSION.SDK_INT >= Build.VERSION_CODES.M ? PendingIntent.FLAG_IMMUTABLE : 0
+            );
+
+            Notification notification = new NotificationCompat.Builder(this, CHANNEL_ID)
+                    .setContentTitle("J.A.R.V.I.S. Floating Assistant")
+                    .setContentText("Displaying over screen. Tap to open full app.")
+                    .setSmallIcon(R.mipmap.ic_launcher)
+                    .setContentIntent(pendingIntent)
+                    .setOngoing(true)
+                    .build();
+
+            if (Build.VERSION.SDK_INT >= 34) {
+                if (PermissionHelper.hasRecordAudioPermission(this)) {
+                    startForeground(NOTIFICATION_ID, notification, ServiceInfo.FOREGROUND_SERVICE_TYPE_MICROPHONE);
+                } else {
+                    startForeground(NOTIFICATION_ID, notification);
+                }
+            } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                 startForeground(NOTIFICATION_ID, notification, ServiceInfo.FOREGROUND_SERVICE_TYPE_MICROPHONE);
             } else {
                 startForeground(NOTIFICATION_ID, notification);
             }
         } catch (Exception e) {
             try {
+                Notification notification = new NotificationCompat.Builder(this, CHANNEL_ID)
+                        .setContentTitle("J.A.R.V.I.S. Assistant")
+                        .setSmallIcon(R.mipmap.ic_launcher)
+                        .build();
                 startForeground(NOTIFICATION_ID, notification);
             } catch (Exception ignored) {}
         }
@@ -157,7 +190,9 @@ public class JarvisOverlayService extends Service implements
         );
         windowParams.gravity = Gravity.CENTER;
 
-        LayoutInflater inflater = LayoutInflater.from(this);
+        // Wrap Service context with App Theme to prevent inflation crashes
+        Context themedContext = new ContextThemeWrapper(this, R.style.Theme_NovaAssistant);
+        LayoutInflater inflater = LayoutInflater.from(themedContext);
         overlayView = inflater.inflate(R.layout.layout_overlay_jarvis, null);
 
         visualizerView = overlayView.findViewById(R.id.overlayVisualizerView);
@@ -175,9 +210,11 @@ public class JarvisOverlayService extends Service implements
 
         // Expand back to full activity
         btnExpand.setOnClickListener(v -> {
-            Intent appIntent = new Intent(this, MainActivity.class);
-            appIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_SINGLE_TOP);
-            startActivity(appIntent);
+            try {
+                Intent appIntent = new Intent(this, MainActivity.class);
+                appIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+                startActivity(appIntent);
+            } catch (Exception ignored) {}
             stopSelf();
         });
 
@@ -206,7 +243,9 @@ public class JarvisOverlayService extends Service implements
                             windowParams.x = initialX + dx;
                             windowParams.y = initialY + dy;
                             if (windowManager != null && overlayView != null) {
-                                windowManager.updateViewLayout(overlayView, windowParams);
+                                try {
+                                    windowManager.updateViewLayout(overlayView, windowParams);
+                                } catch (Exception ignored) {}
                             }
                         }
                         return true;
@@ -225,18 +264,18 @@ public class JarvisOverlayService extends Service implements
         if (!PermissionHelper.hasRecordAudioPermission(this)) {
             return;
         }
-        ttsManager.stop();
-        speechManager.forceListenNow();
-        visualizerView.setState(AssistantState.LISTENING);
+        if (ttsManager != null) ttsManager.stop();
+        if (speechManager != null) speechManager.forceListenNow();
+        if (visualizerView != null) visualizerView.setState(AssistantState.LISTENING);
         setDialogue("LISTENING", "Awaiting voice input...");
     }
 
     private void processQuery(String query) {
-        ttsManager.stop();
-        speechManager.pauseListening();
+        if (ttsManager != null) ttsManager.stop();
+        if (speechManager != null) speechManager.pauseListening();
 
         setDialogue("YOU", query);
-        visualizerView.setState(AssistantState.THINKING);
+        if (visualizerView != null) visualizerView.setState(AssistantState.THINKING);
 
         new Thread(() -> {
             AssistantBrain.Response response = assistantBrain.process(query);
@@ -246,7 +285,7 @@ public class JarvisOverlayService extends Service implements
                         ? response.actionTag
                         : "J.A.R.V.I.S.";
                 setDialogue(tag, response.displayText);
-                ttsManager.speak(response.spokenText);
+                if (ttsManager != null) ttsManager.speak(response.spokenText);
             });
         }).start();
     }
@@ -263,18 +302,18 @@ public class JarvisOverlayService extends Service implements
     // SpeechRecognitionManager Callbacks
     @Override
     public void onReadyForSpeech() {
-        visualizerView.setState(AssistantState.LISTENING);
+        if (visualizerView != null) visualizerView.setState(AssistantState.LISTENING);
     }
 
     @Override
     public void onBeginningOfSpeech() {
-        visualizerView.setState(AssistantState.LISTENING);
+        if (visualizerView != null) visualizerView.setState(AssistantState.LISTENING);
         setDialogue("YOU", "Listening...");
     }
 
     @Override
     public void onRmsChanged(float rmsdB) {
-        visualizerView.setAudioLevel(rmsdB);
+        if (visualizerView != null) visualizerView.setAudioLevel(rmsdB);
     }
 
     @Override
@@ -282,8 +321,8 @@ public class JarvisOverlayService extends Service implements
         if (recognizedText != null && !recognizedText.trim().isEmpty()) {
             processQuery(recognizedText);
         } else {
-            speechManager.resumeListening();
-            visualizerView.setState(AssistantState.LISTENING);
+            if (speechManager != null) speechManager.resumeListening();
+            if (visualizerView != null) visualizerView.setState(AssistantState.LISTENING);
         }
     }
 
@@ -301,28 +340,30 @@ public class JarvisOverlayService extends Service implements
 
     @Override
     public void onEndOfSpeech() {
-        visualizerView.setState(AssistantState.THINKING);
+        if (visualizerView != null) visualizerView.setState(AssistantState.THINKING);
     }
 
     // TextToSpeech Callbacks
     @Override
     public void onSpeechStarted() {
-        mainHandler.post(() -> visualizerView.setState(AssistantState.SPEAKING));
+        mainHandler.post(() -> {
+            if (visualizerView != null) visualizerView.setState(AssistantState.SPEAKING);
+        });
     }
 
     @Override
     public void onSpeechCompleted() {
         mainHandler.post(() -> {
-            visualizerView.setState(AssistantState.LISTENING);
-            speechManager.resumeListening();
+            if (visualizerView != null) visualizerView.setState(AssistantState.LISTENING);
+            if (speechManager != null) speechManager.resumeListening();
         });
     }
 
     @Override
     public void onSpeechError(String error) {
         mainHandler.post(() -> {
-            visualizerView.setState(AssistantState.LISTENING);
-            speechManager.resumeListening();
+            if (visualizerView != null) visualizerView.setState(AssistantState.LISTENING);
+            if (speechManager != null) speechManager.resumeListening();
         });
     }
 
@@ -344,17 +385,23 @@ public class JarvisOverlayService extends Service implements
         }
 
         if (speechManager != null) {
-            speechManager.destroy();
+            try {
+                speechManager.destroy();
+            } catch (Exception ignored) {}
             speechManager = null;
         }
 
         if (ttsManager != null) {
-            ttsManager.shutdown();
+            try {
+                ttsManager.shutdown();
+            } catch (Exception ignored) {}
             ttsManager = null;
         }
 
         if (notesDb != null) {
-            notesDb.close();
+            try {
+                notesDb.close();
+            } catch (Exception ignored) {}
             notesDb = null;
         }
     }
