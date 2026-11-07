@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="black">#FF000000</color>
+    <color name="white">#FFFFFFFF</color>
+
+    <!-- Siri Dark Theme Palette -->
+    <color name="bg_dark">#0A0E1A</color>
+    <color name="bg_card">#131B2E</color>
+    <color name="bg_input">#1C253B</color>
+
+    <!-- Neon Accents -->
+    <color name="siri_cyan">#00F5D4</color>
+    <color name="siri_purple">#7928CA</color>
+    <color name="siri_magenta">#FF0080</color>
+    <color name="siri_blue">#0070F3</color>
+
+    <!-- Text Colors -->
+    <color name="text_primary">#F3F4F6</color>
+    <color name="text_secondary">#9CA3AF</color>
+    <color name="text_muted">#6B7280</color>
+
+    <color name="chip_bg">#182238</color>
+    <color name="chip_stroke">#2D3748</color>
+</resources>
