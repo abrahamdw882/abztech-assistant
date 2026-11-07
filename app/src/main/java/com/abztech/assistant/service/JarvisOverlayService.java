@@ -62,6 +62,7 @@ public class JarvisOverlayService extends Service implements
     private AssistantBrain assistantBrain;
     private NotesDatabaseHelper notesDb;
     private long ttsStartTime = 0;
+    private String lastBotSpokenText = "";
 
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
     public static boolean isRunning = false;
@@ -203,8 +204,9 @@ public class JarvisOverlayService extends Service implements
         ImageButton btnClose = overlayView.findViewById(R.id.btnOverlayClose);
         ImageButton btnExpand = overlayView.findViewById(R.id.btnOverlayExpand);
 
-        // Tap Arc Reactor to interrupt & listen
+        // Tap Arc Reactor or Dialogue to interrupt & listen
         visualizerView.setOnClickListener(v -> interruptAndListen());
+        textDialogue.setOnClickListener(v -> interruptAndListen());
 
         // Close overlay button
         btnClose.setOnClickListener(v -> stopSelf());
@@ -273,6 +275,7 @@ public class JarvisOverlayService extends Service implements
 
     private void processQuery(String query) {
         if (ttsManager != null) ttsManager.stop();
+        if (speechManager != null) speechManager.pauseListening();
 
         setDialogue("YOU", query);
         if (visualizerView != null) visualizerView.setState(AssistantState.THINKING);
@@ -285,15 +288,9 @@ public class JarvisOverlayService extends Service implements
                         ? response.actionTag
                         : "J.A.R.V.I.S.";
                 setDialogue(tag, response.displayText);
+                lastBotSpokenText = response.spokenText != null ? response.spokenText : "";
                 ttsStartTime = System.currentTimeMillis();
                 if (ttsManager != null) ttsManager.speak(response.spokenText);
-
-                if (response.intentType == com.abztech.assistant.engine.IntentType.WAKE_WORD) {
-                    if (visualizerView != null) visualizerView.setState(AssistantState.LISTENING);
-                    if (speechManager != null) speechManager.resumeListening();
-                } else {
-                    if (speechManager != null) speechManager.resumeListening();
-                }
             });
         }).start();
     }
@@ -315,7 +312,7 @@ public class JarvisOverlayService extends Service implements
 
     @Override
     public void onBeginningOfSpeech() {
-        // Voice Barge-in: if assistant is speaking and user speaks, cut off TTS immediately!
+        // If user begins speaking, cut off any active TTS audio
         if (ttsManager != null && ttsManager.isSpeaking() && (System.currentTimeMillis() - ttsStartTime > 250)) {
             ttsManager.stop();
         }
@@ -331,6 +328,11 @@ public class JarvisOverlayService extends Service implements
     @Override
     public void onResults(String recognizedText) {
         if (recognizedText != null && !recognizedText.trim().isEmpty()) {
+            if (isSelfEcho(recognizedText)) {
+                // Detected speech is an acoustic echo of Jarvis's own voice; discard it and keep listening for the user!
+                if (speechManager != null) speechManager.resumeListening();
+                return;
+            }
             processQuery(recognizedText);
         } else {
             if (speechManager != null) speechManager.resumeListening();
@@ -338,9 +340,16 @@ public class JarvisOverlayService extends Service implements
         }
     }
 
+    private boolean isSelfEcho(String detected) {
+        if (detected == null || lastBotSpokenText == null || lastBotSpokenText.isEmpty()) return false;
+        String cleanDetected = detected.toLowerCase(java.util.Locale.ROOT).replaceAll("[^a-z0-9]", "");
+        String cleanBot = lastBotSpokenText.toLowerCase(java.util.Locale.ROOT).replaceAll("[^a-z0-9]", "");
+        if (cleanDetected.length() < 3 || cleanBot.length() < 3) return false;
+        return cleanBot.contains(cleanDetected) || cleanDetected.contains(cleanBot);
+    }
+
     @Override
     public void onPartialResults(String partialText) {
-        // Voice Barge-in: user spoke while TTS was active
         if (ttsManager != null && ttsManager.isSpeaking()) {
             ttsManager.stop();
         }

@@ -50,6 +50,7 @@ public class MainActivity extends AppCompatActivity implements
     private TextToSpeechManager ttsManager;
     private NotesDatabaseHelper notesDb;
     private long ttsStartTime = 0;
+    private String lastBotSpokenText = "";
 
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
 
@@ -142,8 +143,9 @@ public class MainActivity extends AppCompatActivity implements
     }
 
     private void setupListeners() {
-        // Tapping the Arc Reactor directly interrupts & listens!
+        // Tapping the Arc Reactor or Dialogue area directly interrupts & listens!
         visualizerView.setOnClickListener(v -> interruptAndListen());
+        textDialogue.setOnClickListener(v -> interruptAndListen());
 
         // Tapping the Mic button interrupts & listens!
         btnMic.setOnClickListener(v -> interruptAndListen());
@@ -256,7 +258,9 @@ public class MainActivity extends AppCompatActivity implements
     }
 
     private void processUserQuery(String query) {
+        // Cut off audio and pause microphone so Jarvis never listens to its own voice
         ttsManager.stop();
+        speechManager.pauseListening();
 
         setDialogue("YOU", query);
         visualizerView.setState(AssistantState.THINKING);
@@ -270,18 +274,12 @@ public class MainActivity extends AppCompatActivity implements
                         : "J.A.R.V.I.S.";
                 setDialogue(tag, response.displayText);
 
+                lastBotSpokenText = response.spokenText != null ? response.spokenText : "";
                 ttsStartTime = System.currentTimeMillis();
                 ttsManager.speak(response.spokenText);
 
                 if (response.intentType == IntentType.OVERLAY_MODE) {
                     mainHandler.postDelayed(this::launchOverlayMode, 1200);
-                } else if (response.intentType == IntentType.WAKE_WORD) {
-                    // Hotword activated: keep visualizer listening and ensure microphone is waiting
-                    visualizerView.setState(AssistantState.LISTENING);
-                    speechManager.resumeListening();
-                } else {
-                    // Keep speech recognition armed for natural voice barge-in
-                    speechManager.resumeListening();
                 }
             });
         }).start();
@@ -304,7 +302,7 @@ public class MainActivity extends AppCompatActivity implements
 
     @Override
     public void onBeginningOfSpeech() {
-        // Voice Barge-in: if assistant is speaking and user begins speaking, cut off TTS immediately!
+        // If user begins speaking, cut off any remaining TTS audio
         if (ttsManager != null && ttsManager.isSpeaking() && (System.currentTimeMillis() - ttsStartTime > 250)) {
             ttsManager.stop();
         }
@@ -320,6 +318,11 @@ public class MainActivity extends AppCompatActivity implements
     @Override
     public void onResults(String recognizedText) {
         if (recognizedText != null && !recognizedText.trim().isEmpty()) {
+            if (isSelfEcho(recognizedText)) {
+                // Detected speech is an acoustic echo of Jarvis's own voice; discard it and keep listening!
+                speechManager.resumeListening();
+                return;
+            }
             processUserQuery(recognizedText);
         } else {
             speechManager.resumeListening();
@@ -327,9 +330,16 @@ public class MainActivity extends AppCompatActivity implements
         }
     }
 
+    private boolean isSelfEcho(String detected) {
+        if (detected == null || lastBotSpokenText == null || lastBotSpokenText.isEmpty()) return false;
+        String cleanDetected = detected.toLowerCase(java.util.Locale.ROOT).replaceAll("[^a-z0-9]", "");
+        String cleanBot = lastBotSpokenText.toLowerCase(java.util.Locale.ROOT).replaceAll("[^a-z0-9]", "");
+        if (cleanDetected.length() < 3 || cleanBot.length() < 3) return false;
+        return cleanBot.contains(cleanDetected) || cleanDetected.contains(cleanBot);
+    }
+
     @Override
     public void onPartialResults(String partialText) {
-        // Voice Barge-in interruption
         if (ttsManager != null && ttsManager.isSpeaking()) {
             ttsManager.stop();
         }
