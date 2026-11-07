@@ -170,7 +170,7 @@ public class MainActivity extends AppCompatActivity implements
 
         // 3. Update Visualizer & HUD Dialogue
         visualizerView.setState(AssistantState.LISTENING);
-        setDialogue("LISTENING", "// Awaiting voice input...");
+        setDialogue("LISTENING", "Awaiting voice input...");
     }
 
     private void submitTypedQuery() {
@@ -220,7 +220,7 @@ public class MainActivity extends AppCompatActivity implements
     @Override
     public void onBeginningOfSpeech() {
         visualizerView.setState(AssistantState.LISTENING);
-        setDialogue("YOU", "// Listening...");
+        setDialogue("YOU", "Listening...");
     }
 
     @Override
