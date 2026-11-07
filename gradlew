@@ -30,26 +30,18 @@ die () {
     exit 1
 }
 
-# OS specific support (both to verify that the script is being run on the right
-# OS and to setup it up with appropriate path separators).
-cygwin=false
-msys=false
-darwin=false
-nonstop=false
-case "`uname`" in
-  CYGWIN* )
-    cygwin=true
-    ;;
-  Darwin* )
-    darwin=true
-    ;;
-  MINGW* )
-    msys=true
-    ;;
-  NONSTOP* )
-    nonstop=true
-    ;;
-esac
+# Determine APP_HOME
+PRG="$0"
+while [ -h "$PRG" ] ; do
+    ls=`ls -ld "$PRG"`
+    link=`expr "$ls" : '.*-> \(.*\)$'`
+    if expr "$link" : '/.*' > /dev/null; then
+        PRG="$link"
+    else
+        PRG=`dirname "$PRG"`"/$link"
+    fi
+done
+APP_HOME=`cd "\`dirname \"$PRG\"\`" >/dev/null && pwd`
 
 CLASSPATH=$APP_HOME/gradle/wrapper/gradle-wrapper.jar
 
