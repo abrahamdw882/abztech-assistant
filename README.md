@@ -1,6 +1,6 @@
-# Nova Assistant — Offline Siri-Like AI Assistant for Android (Java)
+# Ultron Assistant — Offline AI Assistant for Android (Java)
 
-**Nova Assistant** is a fast, lightweight, and completely **offline** voice assistant app for Android built entirely in **pure Java**. It is designed to look, feel, and function like **Apple's Siri**, providing instant speech recognition, animated waveforms, device hardware control, math calculations, local voice notes, and encyclopedic knowledge—**without requiring internet connection or heavy, battery-draining Large Language Models (LLMs)**.
+**Ultron Assistant** is a fast, lightweight, and completely **offline** voice assistant app for Android built entirely in **pure Java**. It is designed with a futuristic Arc Reactor holographic HUD, floating overlay over other apps, instant offline speech recognition, device hardware control, math calculations, local voice notes, and encyclopedic knowledge—**without requiring internet connection or heavy, battery-draining Large Language Models (LLMs)**.
 
 ---
 
@@ -8,7 +8,7 @@
 
 Running a 4B–8B parameter Large Language Model locally on a mobile phone requires 4GB–8GB of RAM, causes phone overheating, drains battery rapidly, and takes 5–15 seconds to reply.
 
-Instead, **Nova Assistant** uses a **high-speed, multi-layer Natural Language Understanding (NLU) pipeline** (the exact architectural paradigm that made Siri, Google Assistant, and Alexa snappy and reliable):
+Instead, **Ultron Assistant** uses a **high-speed, multi-layer Natural Language Understanding (NLU) pipeline** (the exact architectural paradigm that made Siri, Google Assistant, and Alexa snappy and reliable):
 - **Deterministic Intent Classifier & Slot Extractor**: Parses commands in **< 1 millisecond**.
 - **Fuzzy Matcher**: Tolerates speech-to-text typos and phonetic mispronunciations using Levenshtein distance.
 - **Context Memory**: Tracks conversation state across turns (e.g. *"What is 25 times 4?"* → *"100"* → *"Add 50 to that"* → *"150"*).

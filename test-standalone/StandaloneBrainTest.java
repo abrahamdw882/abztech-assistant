@@ -34,7 +34,7 @@ public class StandaloneBrainTest {
 
     public static void main(String[] args) {
         System.out.println("==================================================");
-        System.out.println("  NOVA SIRI OFFLINE AI ASSISTANT - ENGINE TEST   ");
+        System.out.println("   ULTRON OFFLINE AI ASSISTANT - ENGINE TEST     ");
         System.out.println("==================================================");
 
         MockActionDispatcher mockActions = new MockActionDispatcher();
@@ -304,6 +304,56 @@ public class StandaloneBrainTest {
             passed++;
         } else {
             System.err.println("✗ Test 26 Failed: Got " + r26.displayText);
+        }
+
+        // Test 27: Ultron Wake Word ("Hey Ultron")
+        total++;
+        AssistantBrain.Response r27 = brain.process("Hey Ultron");
+        if (r27.intentType == IntentType.WAKE_WORD && "LISTENING".equals(r27.actionTag)) {
+            System.out.println("✓ Test 27 Passed: 'Hey Ultron' wake-word -> " + r27.spokenText);
+            passed++;
+        } else {
+            System.err.println("✗ Test 27 Failed: Got " + r27.spokenText);
+        }
+
+        // Test 28: Battery Percent ("whats my battery percent")
+        total++;
+        AssistantBrain.Response r28 = brain.process("whats my battery percent");
+        if ("BATTERY".equals(r28.actionTag) && r28.spokenText.contains("85 percent")) {
+            System.out.println("✓ Test 28 Passed: 'whats my battery percent' -> " + r28.displayText);
+            passed++;
+        } else {
+            System.err.println("✗ Test 28 Failed: Got " + r28.displayText);
+        }
+
+        // Test 29: Battery Percentage ("tell me the battery percentage")
+        total++;
+        AssistantBrain.Response r29 = brain.process("tell me the battery percentage");
+        if ("BATTERY".equals(r29.actionTag) && r29.spokenText.contains("85 percent")) {
+            System.out.println("✓ Test 29 Passed: 'tell me the battery percentage' -> " + r29.displayText);
+            passed++;
+        } else {
+            System.err.println("✗ Test 29 Failed: Got " + r29.displayText);
+        }
+
+        // Test 30: Ultron Identity Persona
+        total++;
+        AssistantBrain.Response r30 = brain.process("who are you?");
+        if (r30.spokenText.contains("Ultron")) {
+            System.out.println("✓ Test 30 Passed: Identity contains Ultron -> " + r30.spokenText);
+            passed++;
+        } else {
+            System.err.println("✗ Test 30 Failed: Got " + r30.spokenText);
+        }
+
+        // Test 31: Hands-free Ultron Battery Query ("Hey Ultron, what's my battery percent?")
+        total++;
+        AssistantBrain.Response r31 = brain.process("Hey Ultron, what's my battery percent?");
+        if ("BATTERY".equals(r31.actionTag) && r31.spokenText.contains("85 percent")) {
+            System.out.println("✓ Test 31 Passed: 'Hey Ultron, what's my battery percent?' -> " + r31.displayText);
+            passed++;
+        } else {
+            System.err.println("✗ Test 31 Failed: Got " + r31.displayText);
         }
 
         System.out.println("==================================================");

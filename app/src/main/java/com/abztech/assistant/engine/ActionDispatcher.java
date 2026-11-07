@@ -3,6 +3,7 @@ package com.abztech.assistant.engine;
 import android.app.ActivityManager;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
@@ -102,19 +103,53 @@ public class ActionDispatcher implements IActionDispatcher {
     }
 
     public int getBatteryPercentage() {
-        BatteryManager bm = (BatteryManager) context.getSystemService(Context.BATTERY_SERVICE);
-        if (bm != null) {
-            return bm.getIntProperty(BatteryManager.BATTERY_PROPERTY_CAPACITY);
-        }
+        // Method 1: BatteryManager capacity property (Android 5.0+)
+        try {
+            BatteryManager bm = (BatteryManager) context.getSystemService(Context.BATTERY_SERVICE);
+            if (bm != null) {
+                int capacity = bm.getIntProperty(BatteryManager.BATTERY_PROPERTY_CAPACITY);
+                if (capacity >= 0 && capacity <= 100) {
+                    return capacity;
+                }
+            }
+        } catch (Exception ignored) {}
+
+        // Method 2: Sticky Intent BroadcastReceiver (supported across all Android releases)
+        try {
+            Intent batteryIntent = context.registerReceiver(null, new IntentFilter(Intent.ACTION_BATTERY_CHANGED));
+            if (batteryIntent != null) {
+                int level = batteryIntent.getIntExtra(BatteryManager.EXTRA_LEVEL, -1);
+                int scale = batteryIntent.getIntExtra(BatteryManager.EXTRA_SCALE, -1);
+                if (level >= 0 && scale > 0) {
+                    return Math.round(((float) level / (float) scale) * 100.0f);
+                }
+            }
+        } catch (Exception ignored) {}
+
         return -1;
     }
 
     public boolean isDeviceCharging() {
-        BatteryManager bm = (BatteryManager) context.getSystemService(Context.BATTERY_SERVICE);
-        if (bm != null) {
-            int status = bm.getIntProperty(BatteryManager.BATTERY_PROPERTY_STATUS);
-            return status == BatteryManager.BATTERY_STATUS_CHARGING || status == BatteryManager.BATTERY_STATUS_FULL;
-        }
+        // Method 1: BatteryManager charging status
+        try {
+            BatteryManager bm = (BatteryManager) context.getSystemService(Context.BATTERY_SERVICE);
+            if (bm != null) {
+                int status = bm.getIntProperty(BatteryManager.BATTERY_PROPERTY_STATUS);
+                if (status == BatteryManager.BATTERY_STATUS_CHARGING || status == BatteryManager.BATTERY_STATUS_FULL) {
+                    return true;
+                }
+            }
+        } catch (Exception ignored) {}
+
+        // Method 2: Sticky Intent fallback
+        try {
+            Intent batteryIntent = context.registerReceiver(null, new IntentFilter(Intent.ACTION_BATTERY_CHANGED));
+            if (batteryIntent != null) {
+                int status = batteryIntent.getIntExtra(BatteryManager.EXTRA_STATUS, -1);
+                return status == BatteryManager.BATTERY_STATUS_CHARGING || status == BatteryManager.BATTERY_STATUS_FULL;
+            }
+        } catch (Exception ignored) {}
+
         return false;
     }
 
@@ -244,7 +279,7 @@ public class ActionDispatcher implements IActionDispatcher {
     public boolean setTimer(int seconds) {
         Intent intent = new Intent(AlarmClock.ACTION_SET_TIMER);
         intent.putExtra(AlarmClock.EXTRA_LENGTH, seconds);
-        intent.putExtra(AlarmClock.EXTRA_MESSAGE, "Nova Siri Timer");
+        intent.putExtra(AlarmClock.EXTRA_MESSAGE, "Ultron Timer");
         intent.putExtra(AlarmClock.EXTRA_SKIP_UI, false);
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         if (intent.resolveActivity(context.getPackageManager()) != null) {

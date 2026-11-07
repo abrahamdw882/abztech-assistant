@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">Nova Siri Assistant</string>
+    <string name="app_name">Ultron</string>
     <string name="hint_input">Ask anything or give a command...</string>
     <string name="tap_to_speak">Tap mic to speak</string>
     <string name="listening">Listening...</string>
