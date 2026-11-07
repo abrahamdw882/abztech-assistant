@@ -127,9 +127,10 @@ public class ActionDispatcher implements IActionDispatcher {
     }
 
     public boolean launchApp(String targetAppName) {
-        if (targetAppName == null || targetAppName.trim().isEmpty()) return false;
+    private String findPackageForApp(String appName) {
+        if (appName == null || appName.trim().isEmpty()) return null;
         PackageManager pm = context.getPackageManager();
-        String target = targetAppName.toLowerCase(Locale.ROOT).trim();
+        String target = appName.toLowerCase(Locale.ROOT).trim();
         target = target.replaceAll("^(the\\s+app\\s+|the\\s+application\\s+|app\\s+)", "").trim();
 
         // Common speech-to-text aliases
@@ -157,8 +158,7 @@ public class ActionDispatcher implements IActionDispatcher {
 
             // Exact match
             if (label.equals(target) || pkg.endsWith("." + target) || pkg.equals(target)) {
-                bestMatch = info;
-                break;
+                return info.activityInfo.packageName;
             }
 
             // Substring or fuzzy matching
@@ -174,28 +174,36 @@ public class ActionDispatcher implements IActionDispatcher {
             }
         }
 
-        if (bestMatch != null) {
-            Intent launchIntent = pm.getLaunchIntentForPackage(bestMatch.activityInfo.packageName);
+        if (bestMatch != null && bestMatch.activityInfo != null) {
+            return bestMatch.activityInfo.packageName;
+        }
+
+        // 2. Fallback: Search all installed applications
+        try {
+            List<ApplicationInfo> apps = pm.getInstalledApplications(PackageManager.GET_META_DATA);
+            for (ApplicationInfo app : apps) {
+                CharSequence labelSeq = pm.getApplicationLabel(app);
+                if (labelSeq == null) continue;
+                String label = labelSeq.toString().toLowerCase(Locale.ROOT);
+                if (label.contains(target) || target.contains(label) || FuzzyMatcher.similarity(label, target) > 0.65f) {
+                    return app.packageName;
+                }
+            }
+        } catch (Exception ignored) {}
+
+        return null;
+    }
+
+    @Override
+    public boolean launchApp(String targetAppName) {
+        String pkg = findPackageForApp(targetAppName);
+        if (pkg != null) {
+            PackageManager pm = context.getPackageManager();
+            Intent launchIntent = pm.getLaunchIntentForPackage(pkg);
             if (launchIntent != null) {
                 launchIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                 context.startActivity(launchIntent);
                 return true;
-            }
-        }
-
-        // 2. Fallback: Search all installed applications
-        List<ApplicationInfo> apps = pm.getInstalledApplications(PackageManager.GET_META_DATA);
-        for (ApplicationInfo app : apps) {
-            CharSequence labelSeq = pm.getApplicationLabel(app);
-            if (labelSeq == null) continue;
-            String label = labelSeq.toString().toLowerCase(Locale.ROOT);
-            if (label.contains(target) || target.contains(label) || FuzzyMatcher.similarity(label, target) > 0.65f) {
-                Intent launchIntent = pm.getLaunchIntentForPackage(app.packageName);
-                if (launchIntent != null) {
-                    launchIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                    context.startActivity(launchIntent);
-                    return true;
-                }
             }
         }
         return false;
@@ -208,9 +216,8 @@ public class ActionDispatcher implements IActionDispatcher {
             return true;
         }
 
-        ResolveInfo match = findBestMatchingApp(appName);
-        if (match != null && match.activityInfo != null) {
-            String pkg = match.activityInfo.packageName;
+        String pkg = findPackageForApp(appName);
+        if (pkg != null) {
             try {
                 ActivityManager am = (ActivityManager) context.getSystemService(Context.ACTIVITY_SERVICE);
                 if (am != null) {
