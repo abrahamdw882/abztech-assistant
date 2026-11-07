@@ -30,7 +30,17 @@ jobs:
       - name: Run Standalone Offline Engine Test
         run: |
           mkdir -p test-standalone/bin
-          javac -encoding UTF-8 -d "test-standalone/bin" app/src/main/java/com/abztech/assistant/engine/*.java test-standalone/StandaloneBrainTest.java
+          javac -encoding UTF-8 -d "test-standalone/bin" \
+            app/src/main/java/com/abztech/assistant/engine/IActionDispatcher.java \
+            app/src/main/java/com/abztech/assistant/engine/IntentType.java \
+            app/src/main/java/com/abztech/assistant/engine/IntentResult.java \
+            app/src/main/java/com/abztech/assistant/engine/FuzzyMatcher.java \
+            app/src/main/java/com/abztech/assistant/engine/MathEvaluator.java \
+            app/src/main/java/com/abztech/assistant/engine/OfflineKnowledgeBase.java \
+            app/src/main/java/com/abztech/assistant/engine/ContextMemory.java \
+            app/src/main/java/com/abztech/assistant/engine/IntentClassifier.java \
+            app/src/main/java/com/abztech/assistant/engine/AssistantBrain.java \
+            test-standalone/StandaloneBrainTest.java
           java -cp "test-standalone/bin" com.abztech.assistant.StandaloneBrainTest
 
       - name: Build Debug APK
