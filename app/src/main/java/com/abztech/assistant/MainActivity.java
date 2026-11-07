@@ -13,40 +13,31 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
 
 import com.abztech.assistant.data.NotesDatabaseHelper;
 import com.abztech.assistant.engine.ActionDispatcher;
 import com.abztech.assistant.engine.AssistantBrain;
-import com.abztech.assistant.model.ChatMessage;
 import com.abztech.assistant.speech.SpeechRecognitionManager;
 import com.abztech.assistant.speech.TextToSpeechManager;
 import com.abztech.assistant.ui.AssistantState;
-import com.abztech.assistant.ui.ChatAdapter;
 import com.abztech.assistant.ui.JarvisVisualizerView;
 import com.abztech.assistant.util.PermissionHelper;
 import com.google.android.material.chip.Chip;
 import com.google.android.material.chip.ChipGroup;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
-import java.util.ArrayList;
-import java.util.List;
-
 public class MainActivity extends AppCompatActivity implements
         SpeechRecognitionManager.Listener,
         TextToSpeechManager.SpeechCallback {
 
     private JarvisVisualizerView visualizerView;
-    private RecyclerView recyclerChat;
-    private ChatAdapter chatAdapter;
-    private List<ChatMessage> chatMessages;
+    private TextView textSpeakerTag;
+    private TextView textDialogue;
 
     private FloatingActionButton btnMic;
     private ImageButton btnSend;
     private ImageButton btnMute;
     private EditText editInput;
-    private TextView textStatus;
     private ChipGroup chipGroupSuggestions;
 
     private AssistantBrain assistantBrain;
@@ -72,15 +63,15 @@ public class MainActivity extends AppCompatActivity implements
         // Request audio & hardware permissions
         PermissionHelper.requestNecessaryPermissions(this);
 
-        // Initial warm human greeting
-        addBotMessage("Hey there! I'm ready whenever you are. What's on your mind?", "ONLINE");
+        // Initial warm human greeting directly under the Arc Reactor
+        setDialogue("ONLINE", "Hey there! I'm ready whenever you are. What's on your mind?");
 
         // Automatically activate hands-free listening if microphone permission is ready
         if (PermissionHelper.hasRecordAudioPermission(this)) {
             mainHandler.postDelayed(() -> {
                 if (speechManager != null) {
                     speechManager.startListening();
-                    setAssistantState(AssistantState.LISTENING, "// LISTENING: SAY 'HELLO NOVA' OR 'JARVIS'");
+                    visualizerView.setState(AssistantState.LISTENING);
                 }
             }, 600);
         }
@@ -88,20 +79,13 @@ public class MainActivity extends AppCompatActivity implements
 
     private void initViews() {
         visualizerView = findViewById(R.id.visualizerView);
-        recyclerChat = findViewById(R.id.recyclerChat);
+        textSpeakerTag = findViewById(R.id.textSpeakerTag);
+        textDialogue = findViewById(R.id.textDialogue);
         btnMic = findViewById(R.id.btnMic);
         btnSend = findViewById(R.id.btnSend);
         btnMute = findViewById(R.id.btnMute);
         editInput = findViewById(R.id.editInput);
-        textStatus = findViewById(R.id.textStatus);
         chipGroupSuggestions = findViewById(R.id.chipGroupSuggestions);
-
-        chatMessages = new ArrayList<>();
-        chatAdapter = new ChatAdapter(chatMessages);
-        LinearLayoutManager layoutManager = new LinearLayoutManager(this);
-        layoutManager.setStackFromEnd(true);
-        recyclerChat.setLayoutManager(layoutManager);
-        recyclerChat.setAdapter(chatAdapter);
     }
 
     private void initCoreEngine() {
@@ -184,8 +168,9 @@ public class MainActivity extends AppCompatActivity implements
         // 2. Force speech recognition reset and listen
         speechManager.forceListenNow();
 
-        // 3. Update HUD UI
-        setAssistantState(AssistantState.LISTENING, "// LISTENING: AWAITING VOICE INPUT...");
+        // 3. Update Visualizer & HUD Dialogue
+        visualizerView.setState(AssistantState.LISTENING);
+        setDialogue("LISTENING", "// Awaiting voice input...");
     }
 
     private void submitTypedQuery() {
@@ -201,45 +186,41 @@ public class MainActivity extends AppCompatActivity implements
         ttsManager.stop();
         speechManager.pauseListening();
 
-        addUserMessage(query);
-        setAssistantState(AssistantState.THINKING, "// NEURAL CORE: COMPUTING RESPONSE...");
+        setDialogue("YOU", query);
+        visualizerView.setState(AssistantState.THINKING);
 
         new Thread(() -> {
             AssistantBrain.Response response = assistantBrain.process(query);
 
             mainHandler.post(() -> {
-                addBotMessage(response.displayText, response.actionTag);
+                String tag = (response.actionTag != null && !response.actionTag.isEmpty())
+                        ? response.actionTag
+                        : "J.A.R.V.I.S.";
+                setDialogue(tag, response.displayText);
                 ttsManager.speak(response.spokenText);
             });
         }).start();
     }
 
-    private void addUserMessage(String text) {
-        chatMessages.add(new ChatMessage(text, true));
-        chatAdapter.notifyItemInserted(chatMessages.size() - 1);
-        recyclerChat.smoothScrollToPosition(chatMessages.size() - 1);
-    }
-
-    private void addBotMessage(String text, String actionTag) {
-        chatMessages.add(new ChatMessage(text, false, actionTag));
-        chatAdapter.notifyItemInserted(chatMessages.size() - 1);
-        recyclerChat.smoothScrollToPosition(chatMessages.size() - 1);
-    }
-
-    private void setAssistantState(AssistantState state, String statusText) {
-        visualizerView.setState(state);
-        textStatus.setText(statusText);
+    private void setDialogue(String speaker, String text) {
+        if (textSpeakerTag != null) {
+            textSpeakerTag.setText(speaker != null ? speaker.toUpperCase() : "J.A.R.V.I.S.");
+        }
+        if (textDialogue != null) {
+            textDialogue.setText(text);
+        }
     }
 
     // SpeechRecognitionManager Callbacks
     @Override
     public void onReadyForSpeech() {
-        setAssistantState(AssistantState.LISTENING, "// AWAITING INSTRUCTION: 'HELLO NOVA' OR 'JARVIS'");
+        visualizerView.setState(AssistantState.LISTENING);
     }
 
     @Override
     public void onBeginningOfSpeech() {
-        setAssistantState(AssistantState.LISTENING, "// VOICE DETECTED: RECORDING AUDIO STREAM...");
+        visualizerView.setState(AssistantState.LISTENING);
+        setDialogue("YOU", "// Listening...");
     }
 
     @Override
@@ -253,14 +234,14 @@ public class MainActivity extends AppCompatActivity implements
             processUserQuery(recognizedText);
         } else {
             speechManager.resumeListening();
-            setAssistantState(AssistantState.LISTENING, "// AWAITING INSTRUCTION: 'HELLO NOVA' OR 'JARVIS'");
+            visualizerView.setState(AssistantState.LISTENING);
         }
     }
 
     @Override
     public void onPartialResults(String partialText) {
-        if (partialText != null && !partialText.isEmpty()) {
-            textStatus.setText("// " + partialText.toUpperCase());
+        if (partialText != null && !partialText.trim().isEmpty()) {
+            setDialogue("YOU", partialText);
         }
     }
 
@@ -271,19 +252,19 @@ public class MainActivity extends AppCompatActivity implements
 
     @Override
     public void onEndOfSpeech() {
-        setAssistantState(AssistantState.THINKING, "// DECODING TRANSMISSION...");
+        visualizerView.setState(AssistantState.THINKING);
     }
 
     // TextToSpeech Callbacks
     @Override
     public void onSpeechStarted() {
-        mainHandler.post(() -> setAssistantState(AssistantState.SPEAKING, "// VOCAL SYNTHESIS ACTIVE..."));
+        mainHandler.post(() -> visualizerView.setState(AssistantState.SPEAKING));
     }
 
     @Override
     public void onSpeechCompleted() {
         mainHandler.post(() -> {
-            setAssistantState(AssistantState.LISTENING, "// AWAITING INSTRUCTION: 'HELLO NOVA' OR 'JARVIS'");
+            visualizerView.setState(AssistantState.LISTENING);
             speechManager.resumeListening();
         });
     }
@@ -291,7 +272,7 @@ public class MainActivity extends AppCompatActivity implements
     @Override
     public void onSpeechError(String error) {
         mainHandler.post(() -> {
-            setAssistantState(AssistantState.LISTENING, "// AWAITING INSTRUCTION: 'HELLO NOVA' OR 'JARVIS'");
+            visualizerView.setState(AssistantState.LISTENING);
             speechManager.resumeListening();
         });
     }
@@ -310,7 +291,7 @@ public class MainActivity extends AppCompatActivity implements
             }
             if (audioGranted) {
                 speechManager.startListening();
-                setAssistantState(AssistantState.LISTENING, "// AWAITING INSTRUCTION: 'HELLO NOVA' OR 'JARVIS'");
+                visualizerView.setState(AssistantState.LISTENING);
             } else {
                 Toast.makeText(this, "Microphone permission required for voice activation.", Toast.LENGTH_LONG).show();
             }
