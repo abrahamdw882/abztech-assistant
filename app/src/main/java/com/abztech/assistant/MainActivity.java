@@ -184,9 +184,10 @@ public class MainActivity extends AppCompatActivity implements
             return;
         }
 
-        // Pause speech & stop TTS in main activity so overlay service takes over cleanly
+        // Destroy speech recognizer in main activity so overlay service has 100% exclusive access to the microphone
         if (speechManager != null) {
-            speechManager.pauseListening();
+            speechManager.destroy();
+            speechManager = null;
         }
         if (ttsManager != null) {
             ttsManager.stop();
@@ -406,6 +407,10 @@ public class MainActivity extends AppCompatActivity implements
         super.onResume();
         if (JarvisOverlayService.isRunning) {
             stopService(new Intent(this, JarvisOverlayService.class));
+        }
+        if (speechManager == null) {
+            speechManager = new SpeechRecognitionManager(this, this);
+            speechManager.setContinuousMode(true);
         }
         if (PermissionHelper.hasRecordAudioPermission(this)) {
             speechManager.resumeListening();

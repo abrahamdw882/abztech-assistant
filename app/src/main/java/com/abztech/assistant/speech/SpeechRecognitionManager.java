@@ -75,31 +75,19 @@ public class SpeechRecognitionManager implements RecognitionListener {
 
         try {
             if (speechRecognizer != null) {
+                speechRecognizer.cancel();
                 speechRecognizer.destroy();
+                speechRecognizer = null;
             }
         } catch (Exception ignored) {}
 
         try {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && SpeechRecognizer.isOnDeviceRecognitionAvailable(context)) {
-                try {
-                    speechRecognizer = SpeechRecognizer.createOnDeviceSpeechRecognizer(context);
-                } catch (Exception e) {
-                    speechRecognizer = SpeechRecognizer.createSpeechRecognizer(context);
-                }
-            } else {
-                speechRecognizer = SpeechRecognizer.createSpeechRecognizer(context);
-            }
-
+            speechRecognizer = SpeechRecognizer.createSpeechRecognizer(context);
             if (speechRecognizer != null) {
                 speechRecognizer.setRecognitionListener(this);
             }
         } catch (Exception e) {
-            try {
-                speechRecognizer = SpeechRecognizer.createSpeechRecognizer(context);
-                if (speechRecognizer != null) {
-                    speechRecognizer.setRecognitionListener(this);
-                }
-            } catch (Exception ignored) {}
+            e.printStackTrace();
         }
     }
 
@@ -285,38 +273,19 @@ public class SpeechRecognitionManager implements RecognitionListener {
         // Normal silence/timeout in room — seamlessly rearm without user penalty
         if (error == SpeechRecognizer.ERROR_NO_MATCH || error == SpeechRecognizer.ERROR_SPEECH_TIMEOUT) {
             if (continuousMode && !isPaused) {
-                scheduleRestart(200);
+                scheduleRestart(100);
                 return;
             }
         }
 
-        // Busy or client error — reset recognizer and restart
-        if (error == SpeechRecognizer.ERROR_RECOGNIZER_BUSY || error == SpeechRecognizer.ERROR_CLIENT) {
-            if (continuousMode && !isPaused) {
-                resetRecognizer();
-                scheduleRestart(350);
-                return;
-            }
-        }
-
-        String message;
-        switch (error) {
-            case SpeechRecognizer.ERROR_AUDIO:
-                message = "Audio recording glitch.";
-                break;
-            case SpeechRecognizer.ERROR_INSUFFICIENT_PERMISSIONS:
-                message = "Microphone permission required.";
-                break;
-            default:
-                message = "Listening interrupted.";
-                break;
-        }
-
+        // For any other error state (busy, client, glitch), reset recognizer and restart so it never freezes
         if (continuousMode && !isPaused) {
-            scheduleRestart(600);
+            resetRecognizer();
+            scheduleRestart(250);
+            return;
         }
 
-        if (listener != null) listener.onError(error, message);
+        if (listener != null) listener.onError(error, "Speech error " + error);
     }
 
     @Override

@@ -96,19 +96,24 @@ public class JarvisOverlayService extends Service implements
         // Greet user on overlay launch
         setDialogue("ONLINE", "Hey there! I'm floating right here. How can I help?");
 
-        // Start hands-free speech recognition if audio permission is granted
-        if (PermissionHelper.hasRecordAudioPermission(this)) {
-            mainHandler.postDelayed(() -> {
-                try {
-                    if (speechManager != null) {
-                        speechManager.startListening();
-                        if (visualizerView != null) visualizerView.setState(AssistantState.LISTENING);
-                    }
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-            }, 600);
+        // Start hands-free speech recognition immediately
+        startAutoListening();
+    }
+
+    private void startAutoListening() {
+        if (!PermissionHelper.hasRecordAudioPermission(this)) {
+            return;
         }
+        mainHandler.postDelayed(() -> {
+            try {
+                if (speechManager != null) {
+                    speechManager.forceListenNow();
+                    if (visualizerView != null) visualizerView.setState(AssistantState.LISTENING);
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }, 350);
     }
 
     private void startForegroundServiceNotification() {
@@ -380,7 +385,7 @@ public class JarvisOverlayService extends Service implements
     public void onSpeechCompleted() {
         mainHandler.post(() -> {
             if (visualizerView != null) visualizerView.setState(AssistantState.LISTENING);
-            if (speechManager != null) speechManager.resumeListening();
+            if (speechManager != null) speechManager.forceListenNow();
         });
     }
 
@@ -388,12 +393,13 @@ public class JarvisOverlayService extends Service implements
     public void onSpeechError(String error) {
         mainHandler.post(() -> {
             if (visualizerView != null) visualizerView.setState(AssistantState.LISTENING);
-            if (speechManager != null) speechManager.resumeListening();
+            if (speechManager != null) speechManager.forceListenNow();
         });
     }
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
+        startAutoListening();
         return START_STICKY;
     }
 
