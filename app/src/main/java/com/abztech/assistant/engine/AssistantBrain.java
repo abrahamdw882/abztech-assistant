@@ -190,10 +190,10 @@ public class AssistantBrain {
             case OPEN_APP:
                 String appName = intent.getSlot("appName");
                 if (actionDispatcher != null && actionDispatcher.launchApp(appName)) {
-                    return new Response("Opening " + appName + "...", "🚀 Opening " + appName, "LAUNCH_APP");
+                    return new Response("Right away, sir. Launching " + appName + "...", "⚡ Launching " + appName, "LAUNCH_APP");
                 }
                 return new Response("I couldn't find an installed app named " + appName + " on this device.",
-                        "⚠️ App not found: \"" + appName + "\"", "APP_NOT_FOUND");
+                        "⚠️ Target not found: \"" + appName + "\"", "APP_NOT_FOUND");
 
             case SETTINGS_WIFI:
                 if (actionDispatcher != null) actionDispatcher.openSettings("android.settings.WIFI_SETTINGS");
@@ -272,11 +272,8 @@ public class AssistantBrain {
 
     private Response handleGreeting() {
         int hour = Integer.parseInt(new SimpleDateFormat("H", Locale.getDefault()).format(new Date()));
-        String greeting;
-        if (hour < 12) greeting = "Good morning!";
-        else if (hour < 18) greeting = "Good afternoon!";
-        else greeting = "Good evening!";
-        return new Response(greeting + " How can I help you?", greeting + " What can I do for you?", "GREETING");
+        String greeting = (hour < 12) ? "Good morning, sir." : (hour < 18) ? "Good afternoon, sir." : "Good evening, sir.";
+        return new Response(greeting + " How can I help you?", greeting + " All systems online. Awaiting instruction.", "GREETING");
     }
 
     private Response parseAndSetAlarm(String alarmTime) {

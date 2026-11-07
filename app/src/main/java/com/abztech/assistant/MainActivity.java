@@ -4,7 +4,6 @@ import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
-import android.view.View;
 import android.view.WindowManager;
 import android.view.inputmethod.EditorInfo;
 import android.widget.EditText;
@@ -14,7 +13,6 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -26,7 +24,7 @@ import com.abztech.assistant.speech.SpeechRecognitionManager;
 import com.abztech.assistant.speech.TextToSpeechManager;
 import com.abztech.assistant.ui.AssistantState;
 import com.abztech.assistant.ui.ChatAdapter;
-import com.abztech.assistant.ui.SiriWaveVisualizerView;
+import com.abztech.assistant.ui.JarvisVisualizerView;
 import com.abztech.assistant.util.PermissionHelper;
 import com.google.android.material.chip.Chip;
 import com.google.android.material.chip.ChipGroup;
@@ -39,7 +37,7 @@ public class MainActivity extends AppCompatActivity implements
         SpeechRecognitionManager.Listener,
         TextToSpeechManager.SpeechCallback {
 
-    private SiriWaveVisualizerView visualizerView;
+    private JarvisVisualizerView visualizerView;
     private RecyclerView recyclerChat;
     private ChatAdapter chatAdapter;
     private List<ChatMessage> chatMessages;
@@ -47,7 +45,6 @@ public class MainActivity extends AppCompatActivity implements
     private FloatingActionButton btnMic;
     private ImageButton btnSend;
     private ImageButton btnMute;
-    private TextView btnHandsFree;
     private EditText editInput;
     private TextView textStatus;
     private ChipGroup chipGroupSuggestions;
@@ -57,7 +54,6 @@ public class MainActivity extends AppCompatActivity implements
     private TextToSpeechManager ttsManager;
     private NotesDatabaseHelper notesDb;
 
-    private boolean isHandsFreeActive = true;
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
 
     @Override
@@ -65,7 +61,7 @@ public class MainActivity extends AppCompatActivity implements
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        // Keep screen awake while in Hands-Free mode so Nova can hear "Hello Nova"
+        // Keep screen on so J.A.R.V.I.S. can stay continuously responsive on desk
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 
         initViews();
@@ -76,15 +72,15 @@ public class MainActivity extends AppCompatActivity implements
         // Request audio & hardware permissions
         PermissionHelper.requestNecessaryPermissions(this);
 
-        // Add initial greeting
-        addBotMessage("Hi! Hands-free mode is ACTIVE. Just say 'Hello Nova' or give any command without clicking!", "HANDS_FREE_ACTIVE");
+        // Initial Jarvis greeting
+        addBotMessage("J.A.R.V.I.S. neural interface initialized. All systems online. Say 'Hello Nova' or 'Hey Jarvis' to give any command.", "SYSTEM: ONLINE");
 
-        // If audio permission is already granted, start listening immediately
+        // Automatically activate hands-free listening if microphone permission is ready
         if (PermissionHelper.hasRecordAudioPermission(this)) {
             mainHandler.postDelayed(() -> {
-                if (speechManager != null && isHandsFreeActive) {
+                if (speechManager != null) {
                     speechManager.startListening();
-                    setAssistantState(AssistantState.LISTENING, "🎙️ Listening for 'Hello Nova'...");
+                    setAssistantState(AssistantState.LISTENING, "// AWAITING INSTRUCTION: 'HELLO NOVA' OR 'JARVIS'");
                 }
             }, 600);
         }
@@ -96,7 +92,6 @@ public class MainActivity extends AppCompatActivity implements
         btnMic = findViewById(R.id.btnMic);
         btnSend = findViewById(R.id.btnSend);
         btnMute = findViewById(R.id.btnMute);
-        btnHandsFree = findViewById(R.id.btnHandsFree);
         editInput = findViewById(R.id.editInput);
         textStatus = findViewById(R.id.textStatus);
         chipGroupSuggestions = findViewById(R.id.chipGroupSuggestions);
@@ -121,14 +116,14 @@ public class MainActivity extends AppCompatActivity implements
 
     private void initSuggestions() {
         String[] suggestions = new String[]{
-                "👋 Hello Nova",
-                "🔦 Turn on flashlight",
+                "⚡ Flashlight",
                 "🚀 Open YouTube",
-                "⏰ Set timer for 5 minutes",
-                "🧮 What is 15% of 240?",
-                "🔋 Battery status",
-                "😂 Tell me a joke",
-                "📝 What are my notes?"
+                "💬 Open WhatsApp",
+                "🔋 Battery Status",
+                "⏰ 5m Timer",
+                "🧮 15% of 240",
+                "💡 Fun Fact",
+                "😂 Joke"
         };
 
         chipGroupSuggestions.removeAllViews();
@@ -137,6 +132,10 @@ public class MainActivity extends AppCompatActivity implements
             chip.setText(s);
             chip.setCheckable(false);
             chip.setClickable(true);
+            chip.setChipBackgroundColorResource(R.color.chip_bg);
+            chip.setChipStrokeColorResource(R.color.chip_stroke);
+            chip.setChipStrokeWidth(1.5f);
+            chip.setTextColor(getColor(R.color.text_primary));
             chip.setOnClickListener(v -> {
                 String clean = s.replaceAll("^[^\u0000-\u007F]+\\s*", "");
                 processUserQuery(clean);
@@ -146,23 +145,11 @@ public class MainActivity extends AppCompatActivity implements
     }
 
     private void setupListeners() {
-        // Hands-Free Toggle Pill
-        btnHandsFree.setOnClickListener(v -> toggleHandsFreeMode());
+        // Tapping the Arc Reactor directly interrupts & listens!
+        visualizerView.setOnClickListener(v -> interruptAndListen());
 
-        // Microphone Button
-        btnMic.setOnClickListener(v -> {
-            if (speechManager.isListening()) {
-                speechManager.stopListening();
-                setAssistantState(AssistantState.IDLE, "Tap mic to speak");
-            } else {
-                if (!PermissionHelper.hasRecordAudioPermission(this)) {
-                    PermissionHelper.requestNecessaryPermissions(this);
-                    return;
-                }
-                ttsManager.stop();
-                speechManager.startListening();
-            }
-        });
+        // Tapping the Mic button interrupts & listens!
+        btnMic.setOnClickListener(v -> interruptAndListen());
 
         btnSend.setOnClickListener(v -> submitTypedQuery());
 
@@ -178,29 +165,28 @@ public class MainActivity extends AppCompatActivity implements
             boolean muted = !ttsManager.isMuted();
             ttsManager.setMuted(muted);
             btnMute.setImageResource(muted ? R.drawable.ic_volume_off : R.drawable.ic_volume);
-            Toast.makeText(this, muted ? "Voice muted" : "Voice enabled", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, muted ? "Audio output muted" : "Audio output online", Toast.LENGTH_SHORT).show();
         });
     }
 
-    private void toggleHandsFreeMode() {
-        isHandsFreeActive = !isHandsFreeActive;
-        speechManager.setContinuousMode(isHandsFreeActive);
-
-        if (isHandsFreeActive) {
-            btnHandsFree.setText("🎙️ HANDS-FREE: ON");
-            btnHandsFree.setTextColor(ContextCompat.getColor(this, R.color.siri_cyan));
-            getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
-            speechManager.startListening();
-            setAssistantState(AssistantState.LISTENING, "🎙️ Listening for 'Hello Nova'...");
-            Toast.makeText(this, "Hands-Free Activated: Just say 'Hello Nova'!", Toast.LENGTH_SHORT).show();
-        } else {
-            btnHandsFree.setText("🎙️ TAP TO TALK");
-            btnHandsFree.setTextColor(ContextCompat.getColor(this, R.color.text_muted));
-            getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
-            speechManager.stopListening();
-            setAssistantState(AssistantState.IDLE, "Tap mic to speak");
-            Toast.makeText(this, "Hands-Free Paused", Toast.LENGTH_SHORT).show();
+    /**
+     * Unified interruption handler. Instantly stops TTS, breaks any lock,
+     * and forces the speech recognizer to listen immediately.
+     */
+    private void interruptAndListen() {
+        if (!PermissionHelper.hasRecordAudioPermission(this)) {
+            PermissionHelper.requestNecessaryPermissions(this);
+            return;
         }
+
+        // 1. Immediately cut off audio playback
+        ttsManager.stop();
+
+        // 2. Force speech recognition reset and listen
+        speechManager.forceListenNow();
+
+        // 3. Update HUD UI
+        setAssistantState(AssistantState.LISTENING, "// LISTENING: AWAITING VOICE INPUT...");
     }
 
     private void submitTypedQuery() {
@@ -212,11 +198,12 @@ public class MainActivity extends AppCompatActivity implements
     }
 
     private void processUserQuery(String query) {
-        // Pause listening loop while assistant processes and speaks so it doesn't hear itself
+        // Stop audio playback and pause microphone so Jarvis doesn't hear itself
+        ttsManager.stop();
         speechManager.pauseListening();
 
         addUserMessage(query);
-        setAssistantState(AssistantState.THINKING, "Thinking...");
+        setAssistantState(AssistantState.THINKING, "// NEURAL CORE: COMPUTING RESPONSE...");
 
         new Thread(() -> {
             AssistantBrain.Response response = assistantBrain.process(query);
@@ -248,16 +235,12 @@ public class MainActivity extends AppCompatActivity implements
     // SpeechRecognitionManager Callbacks
     @Override
     public void onReadyForSpeech() {
-        if (isHandsFreeActive) {
-            setAssistantState(AssistantState.LISTENING, "🎙️ Listening for 'Hello Nova'...");
-        } else {
-            setAssistantState(AssistantState.LISTENING, "Listening...");
-        }
+        setAssistantState(AssistantState.LISTENING, "// AWAITING INSTRUCTION: 'HELLO NOVA' OR 'JARVIS'");
     }
 
     @Override
     public void onBeginningOfSpeech() {
-        setAssistantState(AssistantState.LISTENING, "Listening...");
+        setAssistantState(AssistantState.LISTENING, "// VOICE DETECTED: RECORDING AUDIO STREAM...");
     }
 
     @Override
@@ -270,61 +253,47 @@ public class MainActivity extends AppCompatActivity implements
         if (recognizedText != null && !recognizedText.trim().isEmpty()) {
             processUserQuery(recognizedText);
         } else {
-            if (isHandsFreeActive) {
-                speechManager.resumeListening();
-                setAssistantState(AssistantState.LISTENING, "🎙️ Listening for 'Hello Nova'...");
-            } else {
-                setAssistantState(AssistantState.IDLE, "Tap mic to speak");
-            }
+            speechManager.resumeListening();
+            setAssistantState(AssistantState.LISTENING, "// AWAITING INSTRUCTION: 'HELLO NOVA' OR 'JARVIS'");
         }
     }
 
     @Override
     public void onPartialResults(String partialText) {
         if (partialText != null && !partialText.isEmpty()) {
-            textStatus.setText(partialText);
+            textStatus.setText("// " + partialText.toUpperCase());
         }
     }
 
     @Override
     public void onError(int errorCode, String errorMessage) {
-        if (!isHandsFreeActive) {
-            setAssistantState(AssistantState.IDLE, errorMessage);
-        }
+        // Auto-recovery is handled by SpeechRecognitionManager
     }
 
     @Override
     public void onEndOfSpeech() {
-        setAssistantState(AssistantState.THINKING, "Processing...");
+        setAssistantState(AssistantState.THINKING, "// DECODING TRANSMISSION...");
     }
 
     // TextToSpeech Callbacks
     @Override
     public void onSpeechStarted() {
-        mainHandler.post(() -> setAssistantState(AssistantState.SPEAKING, "Speaking..."));
+        mainHandler.post(() -> setAssistantState(AssistantState.SPEAKING, "// VOCAL SYNTHESIS ACTIVE..."));
     }
 
     @Override
     public void onSpeechCompleted() {
         mainHandler.post(() -> {
-            if (isHandsFreeActive) {
-                setAssistantState(AssistantState.LISTENING, "🎙️ Listening for 'Hello Nova'...");
-                speechManager.resumeListening();
-            } else {
-                setAssistantState(AssistantState.IDLE, "Tap mic to speak");
-            }
+            setAssistantState(AssistantState.LISTENING, "// AWAITING INSTRUCTION: 'HELLO NOVA' OR 'JARVIS'");
+            speechManager.resumeListening();
         });
     }
 
     @Override
     public void onSpeechError(String error) {
         mainHandler.post(() -> {
-            if (isHandsFreeActive) {
-                speechManager.resumeListening();
-                setAssistantState(AssistantState.LISTENING, "🎙️ Listening for 'Hello Nova'...");
-            } else {
-                setAssistantState(AssistantState.IDLE, "Tap mic to speak");
-            }
+            setAssistantState(AssistantState.LISTENING, "// AWAITING INSTRUCTION: 'HELLO NOVA' OR 'JARVIS'");
+            speechManager.resumeListening();
         });
     }
 
@@ -340,11 +309,11 @@ public class MainActivity extends AppCompatActivity implements
                     break;
                 }
             }
-            if (audioGranted && isHandsFreeActive) {
+            if (audioGranted) {
                 speechManager.startListening();
-                setAssistantState(AssistantState.LISTENING, "🎙️ Listening for 'Hello Nova'...");
-            } else if (!audioGranted) {
-                Toast.makeText(this, "Microphone permission is required for voice activation.", Toast.LENGTH_LONG).show();
+                setAssistantState(AssistantState.LISTENING, "// AWAITING INSTRUCTION: 'HELLO NOVA' OR 'JARVIS'");
+            } else {
+                Toast.makeText(this, "Microphone permission required for voice activation.", Toast.LENGTH_LONG).show();
             }
         }
     }
@@ -352,7 +321,7 @@ public class MainActivity extends AppCompatActivity implements
     @Override
     protected void onResume() {
         super.onResume();
-        if (isHandsFreeActive && PermissionHelper.hasRecordAudioPermission(this)) {
+        if (PermissionHelper.hasRecordAudioPermission(this)) {
             speechManager.resumeListening();
         }
     }
@@ -362,6 +331,9 @@ public class MainActivity extends AppCompatActivity implements
         super.onPause();
         if (speechManager != null) {
             speechManager.pauseListening();
+        }
+        if (ttsManager != null) {
+            ttsManager.stop();
         }
     }
 

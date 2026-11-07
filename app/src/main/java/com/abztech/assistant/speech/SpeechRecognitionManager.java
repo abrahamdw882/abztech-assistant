@@ -14,8 +14,9 @@ import java.util.ArrayList;
 import java.util.Locale;
 
 /**
- * Handles speech-to-text recognition configured for offline-preferred execution
- * with continuous hands-free listening loop support.
+ * High-reliability, self-healing Speech Recognition Manager.
+ * Solves state-machine deadlocks during interruptions, auto-recovers from Android
+ * SpeechRecognizer busy states, and maintains hands-free continuous listening.
  */
 public class SpeechRecognitionManager implements RecognitionListener {
 
@@ -35,6 +36,7 @@ public class SpeechRecognitionManager implements RecognitionListener {
     private boolean isListening = false;
     private boolean continuousMode = true;
     private boolean isPaused = false;
+    private long lastListeningStartTime = 0;
 
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
     private final Runnable restartRunnable = new Runnable() {
@@ -46,13 +48,27 @@ public class SpeechRecognitionManager implements RecognitionListener {
         }
     };
 
+    // Watchdog to auto-recover if Android SpeechRecognizer gets stuck
+    private final Runnable watchdogRunnable = new Runnable() {
+        @Override
+        public void run() {
+            if (isListening && (System.currentTimeMillis() - lastListeningStartTime > 8000)) {
+                // If stuck in listening state for > 8 seconds without any speech callbacks, reset!
+                resetRecognizer();
+                if (continuousMode && !isPaused) {
+                    startListening();
+                }
+            }
+        }
+    };
+
     public SpeechRecognitionManager(Context context, Listener listener) {
         this.context = context.getApplicationContext();
         this.listener = listener;
         initRecognizer();
     }
 
-    private void initRecognizer() {
+    private synchronized void initRecognizer() {
         if (!SpeechRecognizer.isRecognitionAvailable(context)) {
             return;
         }
@@ -63,29 +79,53 @@ public class SpeechRecognitionManager implements RecognitionListener {
             }
         } catch (Exception ignored) {}
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && SpeechRecognizer.isOnDeviceRecognitionAvailable(context)) {
-            speechRecognizer = SpeechRecognizer.createOnDeviceSpeechRecognizer(context);
-        } else {
-            speechRecognizer = SpeechRecognizer.createSpeechRecognizer(context);
-        }
+        try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && SpeechRecognizer.isOnDeviceRecognitionAvailable(context)) {
+                speechRecognizer = SpeechRecognizer.createOnDeviceSpeechRecognizer(context);
+            } else {
+                speechRecognizer = SpeechRecognizer.createSpeechRecognizer(context);
+            }
 
-        if (speechRecognizer != null) {
-            speechRecognizer.setRecognitionListener(this);
+            if (speechRecognizer != null) {
+                speechRecognizer.setRecognitionListener(this);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
 
-    public synchronized void startListening() {
-        if (isPaused) return;
-
+    private synchronized void resetRecognizer() {
+        isListening = false;
+        mainHandler.removeCallbacks(watchdogRunnable);
         mainHandler.removeCallbacks(restartRunnable);
+        try {
+            if (speechRecognizer != null) {
+                speechRecognizer.cancel();
+                speechRecognizer.destroy();
+                speechRecognizer = null;
+            }
+        } catch (Exception ignored) {}
+        initRecognizer();
+    }
+
+    public synchronized void startListening() {
+        // Explicit call to start listening clears any pause block!
+        this.isPaused = false;
+        mainHandler.removeCallbacks(restartRunnable);
+        mainHandler.removeCallbacks(watchdogRunnable);
 
         if (speechRecognizer == null) {
             initRecognizer();
             if (speechRecognizer == null) {
-                if (listener != null) listener.onError(-1, "Speech recognition is not available.");
+                if (listener != null) listener.onError(-1, "Speech recognition unavailable.");
                 return;
             }
         }
+
+        // Cancel any pending lingering recognition session
+        try {
+            speechRecognizer.cancel();
+        } catch (Exception ignored) {}
 
         Intent intent = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
         intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
@@ -97,17 +137,21 @@ public class SpeechRecognitionManager implements RecognitionListener {
         try {
             speechRecognizer.startListening(intent);
             isListening = true;
+            lastListeningStartTime = System.currentTimeMillis();
+            mainHandler.postDelayed(watchdogRunnable, 8500);
         } catch (Exception e) {
             isListening = false;
-            if (continuousMode && !isPaused) {
-                scheduleRestart(500);
+            resetRecognizer();
+            if (continuousMode) {
+                scheduleRestart(400);
             } else if (listener != null) {
-                listener.onError(-2, "Could not start listening.");
+                listener.onError(-2, "Could not start microphone.");
             }
         }
     }
 
     public synchronized void stopListening() {
+        mainHandler.removeCallbacks(watchdogRunnable);
         mainHandler.removeCallbacks(restartRunnable);
         if (speechRecognizer != null && isListening) {
             try {
@@ -118,6 +162,7 @@ public class SpeechRecognitionManager implements RecognitionListener {
     }
 
     public synchronized void cancel() {
+        mainHandler.removeCallbacks(watchdogRunnable);
         mainHandler.removeCallbacks(restartRunnable);
         if (speechRecognizer != null) {
             try {
@@ -127,22 +172,37 @@ public class SpeechRecognitionManager implements RecognitionListener {
         }
     }
 
-    public void pauseListening() {
-        isPaused = true;
+    /**
+     * Pause listening while Nova/Jarvis speaks back aloud so it doesn't hear itself.
+     */
+    public synchronized void pauseListening() {
+        this.isPaused = true;
         cancel();
     }
 
-    public void resumeListening() {
-        isPaused = false;
+    /**
+     * Resume listening after speech output finishes or user taps to interrupt.
+     */
+    public synchronized void resumeListening() {
+        this.isPaused = false;
         if (continuousMode) {
-            scheduleRestart(200);
+            scheduleRestart(150);
         }
+    }
+
+    /**
+     * Instantly interrupts any speech and forcefully re-arms speech recognition.
+     */
+    public synchronized void forceListenNow() {
+        this.isPaused = false;
+        resetRecognizer();
+        startListening();
     }
 
     public void scheduleRestart(long delayMs) {
         if (!continuousMode || isPaused) return;
         mainHandler.removeCallbacks(restartRunnable);
-        mainHandler.postDelayed(restartRunnable, delayMs);
+        mainHandler.postDelayed(restartRunnable, Math.max(50, delayMs));
     }
 
     public boolean isListening() {
@@ -153,6 +213,7 @@ public class SpeechRecognitionManager implements RecognitionListener {
         this.continuousMode = enabled;
         if (!enabled) {
             mainHandler.removeCallbacks(restartRunnable);
+            mainHandler.removeCallbacks(watchdogRunnable);
         } else if (!isListening && !isPaused) {
             startListening();
         }
@@ -164,6 +225,7 @@ public class SpeechRecognitionManager implements RecognitionListener {
 
     public void destroy() {
         mainHandler.removeCallbacks(restartRunnable);
+        mainHandler.removeCallbacks(watchdogRunnable);
         if (speechRecognizer != null) {
             try {
                 speechRecognizer.destroy();
@@ -175,11 +237,15 @@ public class SpeechRecognitionManager implements RecognitionListener {
     // RecognitionListener Callbacks
     @Override
     public void onReadyForSpeech(Bundle params) {
+        isListening = true;
+        mainHandler.removeCallbacks(watchdogRunnable);
         if (listener != null) listener.onReadyForSpeech();
     }
 
     @Override
     public void onBeginningOfSpeech() {
+        isListening = true;
+        mainHandler.removeCallbacks(watchdogRunnable);
         if (listener != null) listener.onBeginningOfSpeech();
     }
 
@@ -194,17 +260,19 @@ public class SpeechRecognitionManager implements RecognitionListener {
     @Override
     public void onEndOfSpeech() {
         isListening = false;
+        mainHandler.removeCallbacks(watchdogRunnable);
         if (listener != null) listener.onEndOfSpeech();
     }
 
     @Override
     public void onError(int error) {
         isListening = false;
+        mainHandler.removeCallbacks(watchdogRunnable);
 
-        // Normal pauses in room conversation — seamlessly rearm without showing error
+        // Normal silence/timeout in room — seamlessly rearm without user penalty
         if (error == SpeechRecognizer.ERROR_NO_MATCH || error == SpeechRecognizer.ERROR_SPEECH_TIMEOUT) {
             if (continuousMode && !isPaused) {
-                scheduleRestart(300);
+                scheduleRestart(200);
                 return;
             }
         }
@@ -212,8 +280,8 @@ public class SpeechRecognitionManager implements RecognitionListener {
         // Busy or client error — reset recognizer and restart
         if (error == SpeechRecognizer.ERROR_RECOGNIZER_BUSY || error == SpeechRecognizer.ERROR_CLIENT) {
             if (continuousMode && !isPaused) {
-                initRecognizer();
-                scheduleRestart(500);
+                resetRecognizer();
+                scheduleRestart(350);
                 return;
             }
         }
@@ -221,14 +289,10 @@ public class SpeechRecognitionManager implements RecognitionListener {
         String message;
         switch (error) {
             case SpeechRecognizer.ERROR_AUDIO:
-                message = "Audio recording error.";
+                message = "Audio recording glitch.";
                 break;
             case SpeechRecognizer.ERROR_INSUFFICIENT_PERMISSIONS:
                 message = "Microphone permission required.";
-                break;
-            case SpeechRecognizer.ERROR_NETWORK:
-            case SpeechRecognizer.ERROR_NETWORK_TIMEOUT:
-                message = "Network timeout (Ensure offline voice pack is enabled).";
                 break;
             default:
                 message = "Listening interrupted.";
@@ -236,7 +300,7 @@ public class SpeechRecognitionManager implements RecognitionListener {
         }
 
         if (continuousMode && !isPaused) {
-            scheduleRestart(1000);
+            scheduleRestart(600);
         }
 
         if (listener != null) listener.onError(error, message);
@@ -245,6 +309,8 @@ public class SpeechRecognitionManager implements RecognitionListener {
     @Override
     public void onResults(Bundle results) {
         isListening = false;
+        mainHandler.removeCallbacks(watchdogRunnable);
+
         String detected = null;
         if (results != null) {
             ArrayList<String> matches = results.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION);
@@ -257,7 +323,7 @@ public class SpeechRecognitionManager implements RecognitionListener {
             if (listener != null) listener.onResults(detected);
         } else {
             if (continuousMode && !isPaused) {
-                scheduleRestart(250);
+                scheduleRestart(200);
             }
         }
     }

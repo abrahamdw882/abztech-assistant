@@ -3,22 +3,28 @@
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
 
-    <!-- Siri Dark Theme Palette -->
-    <color name="bg_dark">#0A0E1A</color>
-    <color name="bg_card">#131B2E</color>
-    <color name="bg_input">#1C253B</color>
+    <!-- J.A.R.V.I.S. Obsidian & Holographic Palette -->
+    <color name="bg_dark">#030712</color>
+    <color name="bg_card">#071326</color>
+    <color name="bg_input">#0A1A33</color>
 
-    <!-- Neon Accents -->
-    <color name="siri_cyan">#00F5D4</color>
-    <color name="siri_purple">#7928CA</color>
-    <color name="siri_magenta">#FF0080</color>
-    <color name="siri_blue">#0070F3</color>
+    <!-- Arc Reactor & Hologram Accents -->
+    <color name="jarvis_cyan">#00F0FF</color>
+    <color name="jarvis_blue">#0072FF</color>
+    <color name="jarvis_amber">#FFB300</color>
+    <color name="jarvis_border">#143860</color>
 
-    <!-- Text Colors -->
-    <color name="text_primary">#F3F4F6</color>
-    <color name="text_secondary">#9CA3AF</color>
-    <color name="text_muted">#6B7280</color>
+    <!-- Backwards compatible color names -->
+    <color name="siri_cyan">#00F0FF</color>
+    <color name="siri_purple">#0072FF</color>
+    <color name="siri_magenta">#00F0FF</color>
+    <color name="siri_blue">#0072FF</color>
 
-    <color name="chip_bg">#182238</color>
-    <color name="chip_stroke">#2D3748</color>
+    <!-- Text & Readouts -->
+    <color name="text_primary">#EBF8FF</color>
+    <color name="text_secondary">#7EA5C9</color>
+    <color name="text_muted">#426182</color>
+
+    <color name="chip_bg">#091B33</color>
+    <color name="chip_stroke">#12365E</color>
 </resources>

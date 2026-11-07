@@ -234,6 +234,16 @@ public class StandaloneBrainTest {
             System.err.println("✗ Test 19 Failed: Got " + r19.displayText);
         }
 
+        // Test 20: Jarvis Persona & Wake Word ("Hey Jarvis, open WhatsApp")
+        total++;
+        AssistantBrain.Response r20 = brain.process("Hey Jarvis, open WhatsApp");
+        if ("LAUNCH_APP".equals(r20.actionTag) && r20.displayText.contains("WhatsApp")) {
+            System.out.println("✓ Test 20 Passed: 'Hey Jarvis, open WhatsApp' -> " + r20.displayText);
+            passed++;
+        } else {
+            System.err.println("✗ Test 20 Failed: Got " + r20.displayText);
+        }
+
         System.out.println("==================================================");
         System.out.println("RESULTS: " + passed + " / " + total + " TESTS PASSED (100% OFFLINE)");
         System.out.println("==================================================");

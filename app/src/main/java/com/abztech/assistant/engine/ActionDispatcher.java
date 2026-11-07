@@ -4,6 +4,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
+import android.content.pm.ResolveInfo;
 import android.hardware.camera2.CameraAccessException;
 import android.hardware.camera2.CameraCharacteristics;
 import android.hardware.camera2.CameraManager;
@@ -125,43 +126,75 @@ public class ActionDispatcher implements IActionDispatcher {
     }
 
     public boolean launchApp(String targetAppName) {
+        if (targetAppName == null || targetAppName.trim().isEmpty()) return false;
         PackageManager pm = context.getPackageManager();
-        List<ApplicationInfo> apps = pm.getInstalledApplications(PackageManager.GET_META_DATA);
-
         String target = targetAppName.toLowerCase(Locale.ROOT).trim();
-        ApplicationInfo bestMatch = null;
+        target = target.replaceAll("^(the\\s+app\\s+|the\\s+application\\s+|app\\s+)", "").trim();
+
+        // Common speech-to-text aliases
+        if (target.equals("yt") || target.contains("you tube")) target = "youtube";
+        if (target.equals("wa") || target.contains("what's app") || target.contains("whats app")) target = "whatsapp";
+        if (target.equals("cam")) target = "camera";
+        if (target.equals("calc")) target = "calculator";
+        if (target.equals("browser") || target.equals("internet")) target = "chrome";
+        if (target.equals("photos")) target = "gallery";
+        if (target.equals("music")) target = "spotify";
+
+        // 1. Check real user launcher activities first (guarantees launchable apps)
+        Intent mainIntent = new Intent(Intent.ACTION_MAIN, null);
+        mainIntent.addCategory(Intent.CATEGORY_LAUNCHER);
+        List<ResolveInfo> launchables = pm.queryIntentActivities(mainIntent, 0);
+
+        ResolveInfo bestMatch = null;
         float highestScore = 0f;
 
-        for (ApplicationInfo app : apps) {
-            CharSequence labelSeq = pm.getApplicationLabel(app);
+        for (ResolveInfo info : launchables) {
+            CharSequence labelSeq = info.loadLabel(pm);
             if (labelSeq == null) continue;
             String label = labelSeq.toString().toLowerCase(Locale.ROOT);
+            String pkg = info.activityInfo.packageName.toLowerCase(Locale.ROOT);
 
             // Exact match
-            if (label.equals(target)) {
-                bestMatch = app;
+            if (label.equals(target) || pkg.endsWith("." + target) || pkg.equals(target)) {
+                bestMatch = info;
                 break;
             }
 
-            // Substring or fuzzy score
+            // Substring or fuzzy matching
             if (label.contains(target) || target.contains(label)) {
-                bestMatch = app;
+                bestMatch = info;
                 highestScore = 0.9f;
             } else {
                 float sim = FuzzyMatcher.similarity(label, target);
-                if (sim > highestScore && sim > 0.65f) {
+                if (sim > highestScore && sim > 0.60f) {
                     highestScore = sim;
-                    bestMatch = app;
+                    bestMatch = info;
                 }
             }
         }
 
         if (bestMatch != null) {
-            Intent launchIntent = pm.getLaunchIntentForPackage(bestMatch.packageName);
+            Intent launchIntent = pm.getLaunchIntentForPackage(bestMatch.activityInfo.packageName);
             if (launchIntent != null) {
                 launchIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                 context.startActivity(launchIntent);
                 return true;
+            }
+        }
+
+        // 2. Fallback: Search all installed applications
+        List<ApplicationInfo> apps = pm.getInstalledApplications(PackageManager.GET_META_DATA);
+        for (ApplicationInfo app : apps) {
+            CharSequence labelSeq = pm.getApplicationLabel(app);
+            if (labelSeq == null) continue;
+            String label = labelSeq.toString().toLowerCase(Locale.ROOT);
+            if (label.contains(target) || target.contains(label) || FuzzyMatcher.similarity(label, target) > 0.65f) {
+                Intent launchIntent = pm.getLaunchIntentForPackage(app.packageName);
+                if (launchIntent != null) {
+                    launchIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                    context.startActivity(launchIntent);
+                    return true;
+                }
             }
         }
         return false;

@@ -5,49 +5,63 @@
     android:layout_height="match_parent"
     android:background="@color/bg_dark">
 
-    <!-- Top Bar -->
+    <!-- Top Sci-Fi Header -->
     <RelativeLayout
         android:id="@+id/topBar"
         android:layout_width="match_parent"
-        android:layout_height="56dp"
+        android:layout_height="60dp"
         android:layout_alignParentTop="true"
-        android:paddingStart="16dp"
-        android:paddingEnd="16dp"
-        android:gravity="center_vertical">
+        android:paddingStart="18dp"
+        android:paddingEnd="18dp"
+        android:gravity="center_vertical"
+        android:background="#050C1B">
 
         <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_alignParentStart="true"
             android:layout_centerVertical="true"
-            android:gravity="center_vertical"
-            android:orientation="horizontal">
+            android:orientation="vertical">
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <!-- Online Pulsing Beacon -->
+                <View
+                    android:layout_width="8dp"
+                    android:layout_height="8dp"
+                    android:layout_marginEnd="8dp"
+                    android:background="@drawable/bg_action_tag" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="J.A.R.V.I.S."
+                    android:textColor="@color/jarvis_cyan"
+                    android:textSize="18sp"
+                    android:textStyle="bold"
+                    android:letterSpacing="0.08" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="6dp"
+                    android:text="NOVA"
+                    android:textColor="@color/text_secondary"
+                    android:textSize="14sp"
+                    android:letterSpacing="0.05" />
+            </LinearLayout>
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Nova"
-                android:textColor="@color/siri_cyan"
-                android:textSize="20sp"
-                android:textStyle="bold" />
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="4dp"
-                android:text="Siri"
-                android:textColor="@color/text_primary"
-                android:textSize="20sp" />
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="8dp"
-                android:background="@drawable/bg_action_tag"
-                android:text="OFFLINE"
-                android:textColor="@color/siri_cyan"
-                android:textSize="10sp"
-                android:textStyle="bold" />
+                android:text="OFFLINE NEURAL INTERFACE // V2.0"
+                android:textColor="@color/text_muted"
+                android:textSize="9sp"
+                android:letterSpacing="0.06" />
         </LinearLayout>
 
         <LinearLayout
@@ -59,33 +73,30 @@
             android:orientation="horizontal">
 
             <TextView
-                android:id="@+id/btnHandsFree"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:background="@drawable/bg_action_tag"
-                android:paddingStart="10dp"
-                android:paddingEnd="10dp"
-                android:paddingTop="5dp"
-                android:paddingBottom="5dp"
-                android:text="🎙️ HANDS-FREE: ON"
-                android:textColor="@color/siri_cyan"
-                android:textSize="11sp"
+                android:text="CORE: ACTIVE"
+                android:textColor="@color/jarvis_cyan"
+                android:textSize="10sp"
                 android:textStyle="bold"
-                android:clickable="true"
-                android:focusable="true" />
+                android:paddingStart="8dp"
+                android:paddingEnd="8dp"
+                android:paddingTop="3dp"
+                android:paddingBottom="3dp" />
 
             <ImageButton
                 android:id="@+id/btnMute"
-                android:layout_width="40dp"
-                android:layout_height="40dp"
-                android:layout_marginStart="8dp"
+                android:layout_width="38dp"
+                android:layout_height="38dp"
+                android:layout_marginStart="10dp"
                 android:background="?attr/selectableItemBackgroundBorderless"
                 android:contentDescription="Toggle Mute"
                 android:src="@drawable/ic_volume" />
         </LinearLayout>
     </RelativeLayout>
 
-    <!-- Bottom Controls Area -->
+    <!-- Bottom HUD Controls Area -->
     <LinearLayout
         android:id="@+id/bottomContainer"
         android:layout_width="match_parent"
@@ -94,24 +105,27 @@
         android:orientation="vertical"
         android:paddingBottom="12dp">
 
-        <!-- Siri Wave Visualizer -->
-        <com.abztech.assistant.ui.SiriWaveVisualizerView
+        <!-- Holographic Arc Reactor Visualizer -->
+        <com.abztech.assistant.ui.JarvisVisualizerView
             android:id="@+id/visualizerView"
             android:layout_width="match_parent"
-            android:layout_height="80dp" />
+            android:layout_height="96dp"
+            android:contentDescription="Holographic Arc Reactor" />
 
-        <!-- Status Text -->
+        <!-- Terminal Status Prompt -->
         <TextView
             android:id="@+id/textStatus"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center_horizontal"
+            android:layout_marginTop="2dp"
             android:layout_marginBottom="8dp"
-            android:text="@string/tap_to_speak"
-            android:textColor="@color/text_secondary"
-            android:textSize="13sp" />
+            android:text="// AWAITING INSTRUCTION: SAY 'HELLO NOVA' OR 'JARVIS'"
+            android:textColor="@color/jarvis_cyan"
+            android:textSize="11sp"
+            android:letterSpacing="0.04" />
 
-        <!-- Input Row (Mic FAB + Text Input + Send Button) -->
+        <!-- Input Bar with Glow FAB -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -120,19 +134,19 @@
             android:paddingStart="16dp"
             android:paddingEnd="16dp">
 
-            <!-- Mic FAB -->
+            <!-- Arc Reactor Mic Button -->
             <com.google.android.material.floatingactionbutton.FloatingActionButton
                 android:id="@+id/btnMic"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:contentDescription="Speak"
-                app:backgroundTint="@color/siri_purple"
-                app:elevation="6dp"
+                android:contentDescription="Voice Command / Interrupt"
+                app:backgroundTint="@color/jarvis_blue"
+                app:elevation="8dp"
                 app:fabSize="normal"
                 app:srcCompat="@drawable/ic_mic"
                 app:tint="@color/white" />
 
-            <!-- Text Box -->
+            <!-- Cyberpunk Terminal Input -->
             <LinearLayout
                 android:layout_width="0dp"
                 android:layout_height="48dp"
@@ -150,34 +164,34 @@
                     android:layout_height="match_parent"
                     android:layout_weight="1"
                     android:background="@null"
-                    android:hint="@string/hint_input"
+                    android:hint="// Enter command or question..."
                     android:imeOptions="actionSend"
                     android:inputType="textCapSentences"
                     android:maxLines="1"
                     android:textColor="@color/text_primary"
                     android:textColorHint="@color/text_muted"
-                    android:textSize="14sp" />
+                    android:textSize="13sp" />
 
                 <ImageButton
                     android:id="@+id/btnSend"
                     android:layout_width="36dp"
                     android:layout_height="36dp"
                     android:background="?attr/selectableItemBackgroundBorderless"
-                    android:contentDescription="Send"
+                    android:contentDescription="Execute Command"
                     android:src="@drawable/ic_send" />
             </LinearLayout>
         </LinearLayout>
     </LinearLayout>
 
-    <!-- Suggestion Chips Horizontal Bar -->
+    <!-- Sci-Fi Protocol Suggestion Chips -->
     <HorizontalScrollView
         android:id="@+id/scrollSuggestions"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_above="@id/bottomContainer"
         android:clipToPadding="false"
-        android:paddingStart="12dp"
-        android:paddingEnd="12dp"
+        android:paddingStart="14dp"
+        android:paddingEnd="14dp"
         android:paddingBottom="4dp"
         android:scrollbars="none">
 
@@ -188,7 +202,7 @@
             app:singleLine="true" />
     </HorizontalScrollView>
 
-    <!-- Chat RecyclerView -->
+    <!-- Central Holographic HUD Chat Feed -->
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/recyclerChat"
         android:layout_width="match_parent"

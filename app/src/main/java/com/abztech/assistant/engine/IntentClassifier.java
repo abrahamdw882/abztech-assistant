@@ -24,10 +24,11 @@ public class IntentClassifier {
         String text = rawText.trim().toLowerCase(Locale.ROOT);
         text = text.replaceAll("[?!.,]+$", "").trim();
 
-        // Normalize Siri / Nova hotwords or prefixes (e.g. "hello nova", "hey nova", "ok nova", "hi nova")
-        text = text.replaceAll("^(?:hey\\s+|ok\\s+|hello\\s+|hi\\s+)?(?:siri|nova|assistant)\\s*,?\\s*", "").trim();
+        // Normalize Siri / Nova / Jarvis hotwords or prefixes (e.g. "hello nova", "hey jarvis", "jarvis", "wake up")
+        text = text.replaceAll("^(?:hey\\s+|ok\\s+|hello\\s+|hi\\s+)?(?:siri|nova|jarvis|assistant|computer)\\s*,?\\s*", "").trim();
+        text = text.replaceAll("^(?:wake\\s+up|listen\\s+up|are\\s+you\\s+there)\\s*,?\\s*", "").trim();
         text = text.replaceAll("[?!.,]+$", "").trim();
-        if (text.isEmpty()) {
+        if (text.isEmpty() || matchesAny(text, "^(jarvis|nova|siri)$")) {
             return new IntentResult(IntentType.GREETING, 1.0f, rawText);
         }
 
@@ -143,7 +144,7 @@ public class IntentClassifier {
         }
 
         // 8. APP LAUNCHER
-        Pattern openAppPattern = Pattern.compile("^(?:open|launch|start|run)\\s+(?:the\\s+app\\s+|the\\s+application\\s+|app\\s+)?([a-zA-Z0-9 ._-]+)$");
+        Pattern openAppPattern = Pattern.compile("^(?:please\\s+|can\\s+you\\s+|could\\s+you\\s+)?(?:open\\s+up|open|launch|start|run|play)\\s+(?:the\\s+app\\s+|the\\s+application\\s+|app\\s+)?([a-zA-Z0-9 ._'-]+)$");
         Matcher openAppMatcher = openAppPattern.matcher(text);
         if (openAppMatcher.find()) {
             String targetAppLower = openAppMatcher.group(1).trim();
@@ -158,7 +159,7 @@ public class IntentClassifier {
             }
 
             // Extract original casing from rawText if possible
-            Pattern rawAppPattern = Pattern.compile("(?i)^(?:hey\\s+|ok\\s+|hello\\s+|hi\\s+)?(?:siri|nova|assistant)?\\s*,?\\s*(?:open|launch|start|run)\\s+(?:the\\s+app\\s+|the\\s+application\\s+|app\\s+)?([a-zA-Z0-9 ._-]+)[?!.,]*$");
+            Pattern rawAppPattern = Pattern.compile("(?i)^(?:hey\\s+|ok\\s+|hello\\s+|hi\\s+)?(?:siri|nova|jarvis|assistant)?\\s*,?\\s*(?:please\\s+|can\\s+you\\s+|could\\s+you\\s+)?(?:open\\s+up|open|launch|start|run|play)\\s+(?:the\\s+app\\s+|the\\s+application\\s+|app\\s+)?([a-zA-Z0-9 ._'-]+)[?!.,]*$");
             Matcher rawAppMatcher = rawAppPattern.matcher(rawText.trim());
             String targetApp = (rawAppMatcher.find()) ? rawAppMatcher.group(1).trim() : targetAppLower;
 
