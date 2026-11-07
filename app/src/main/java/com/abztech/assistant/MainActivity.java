@@ -72,15 +72,15 @@ public class MainActivity extends AppCompatActivity implements
         // Request audio & hardware permissions
         PermissionHelper.requestNecessaryPermissions(this);
 
-        // Initial Jarvis greeting
-        addBotMessage("J.A.R.V.I.S. neural interface initialized. All systems online. Say 'Hello Nova' or 'Hey Jarvis' to give any command.", "SYSTEM: ONLINE");
+        // Initial warm human greeting
+        addBotMessage("Hey there! I'm ready whenever you are. What's on your mind?", "ONLINE");
 
         // Automatically activate hands-free listening if microphone permission is ready
         if (PermissionHelper.hasRecordAudioPermission(this)) {
             mainHandler.postDelayed(() -> {
                 if (speechManager != null) {
                     speechManager.startListening();
-                    setAssistantState(AssistantState.LISTENING, "// AWAITING INSTRUCTION: 'HELLO NOVA' OR 'JARVIS'");
+                    setAssistantState(AssistantState.LISTENING, "// LISTENING: SAY 'HELLO NOVA' OR 'JARVIS'");
                 }
             }, 600);
         }
@@ -116,14 +116,16 @@ public class MainActivity extends AppCompatActivity implements
 
     private void initSuggestions() {
         String[] suggestions = new String[]{
-                "⚡ Flashlight",
-                "🚀 Open YouTube",
-                "💬 Open WhatsApp",
-                "🔋 Battery Status",
-                "⏰ 5m Timer",
-                "🧮 15% of 240",
-                "💡 Fun Fact",
-                "😂 Joke"
+                "How are you?",
+                "What's up?",
+                "Flashlight",
+                "Open YouTube",
+                "Open WhatsApp",
+                "Battery Status",
+                "Set 5m Timer",
+                "15% of 240",
+                "Tell a Joke",
+                "Fun Fact"
         };
 
         chipGroupSuggestions.removeAllViews();
@@ -136,10 +138,7 @@ public class MainActivity extends AppCompatActivity implements
             chip.setChipStrokeColorResource(R.color.chip_stroke);
             chip.setChipStrokeWidth(1.5f);
             chip.setTextColor(getColor(R.color.text_primary));
-            chip.setOnClickListener(v -> {
-                String clean = s.replaceAll("^[^\u0000-\u007F]+\\s*", "");
-                processUserQuery(clean);
-            });
+            chip.setOnClickListener(v -> processUserQuery(s));
             chipGroupSuggestions.addView(chip);
         }
     }

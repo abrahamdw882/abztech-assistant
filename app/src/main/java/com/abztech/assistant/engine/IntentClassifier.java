@@ -32,14 +32,23 @@ public class IntentClassifier {
             return new IntentResult(IntentType.GREETING, 1.0f, rawText);
         }
 
-        // 1. GREETINGS & SMALL TALK
-        if (matchesAny(text, "^(hi|hello|hey|good\\s+(morning|afternoon|evening|day)|greetings)$")) {
+        // 1. GREETINGS & CASUAL HUMAN SMALL TALK
+        if (matchesAny(text, "^(how\\s+are\\s+you|how're\\s+you|how\\s+are\\s+you\\s+doing|how's\\s+it\\s+going|how\\s+you\\s+doing|you\\s+good|how\\s+have\\s+you\\s+been).*")) {
+            return new IntentResult(IntentType.HOW_ARE_YOU, 1.0f, rawText);
+        }
+        if (matchesAny(text, "^(what's\\s+up|what's\\s+good|whats\\s+up|sup|what\\s+are\\s+you\\s+doing|what\\s+you\\s+doing).*")) {
+            return new IntentResult(IntentType.WHATS_UP, 1.0f, rawText);
+        }
+        if (matchesAny(text, "^(i'm\\s+good|i\\s+am\\s+good|i'm\\s+fine|i'm\\s+doing\\s+well|doing\\s+good|pretty\\s+good|not\\s+much|just\\s+chilling).*")) {
+            return new IntentResult(IntentType.USER_STATUS, 1.0f, rawText);
+        }
+        if (matchesAny(text, "^(hi|hello|hey|hey\\s+there|hi\\s+there|good\\s+(morning|afternoon|evening|day)|greetings)$")) {
             return new IntentResult(IntentType.GREETING, 1.0f, rawText);
         }
-        if (matchesAny(text, "^(bye|goodbye|see\\s+ya|exit|quit|close)$")) {
+        if (matchesAny(text, "^(bye|goodbye|see\\s+ya|exit|quit|close|good\\s+night|gn)$")) {
             return new IntentResult(IntentType.FAREWELL, 1.0f, rawText);
         }
-        if (matchesAny(text, "^(thanks|thank\\s+you|appreciate\\s+it)$")) {
+        if (matchesAny(text, "^(thanks|thank\\s+you|appreciate\\s+it|thanks\\s+a\\s+lot|thx)$")) {
             return new IntentResult(IntentType.THANKS, 1.0f, rawText);
         }
         if (matchesAny(text, "^(who\\s+are\\s+you|what\\s+is\\s+your\\s+name|who\\s+made\\s+you|what\\s+are\\s+you)$")) {

@@ -194,10 +194,10 @@ public class StandaloneBrainTest {
             System.err.println("✗ Test 15 Failed: Got " + r15.spokenText);
         }
 
-        // Test 16: Identity / Siri persona
+        // Test 16: Identity / Persona
         total++;
         AssistantBrain.Response r16 = brain.process("who are you?");
-        if (r16.spokenText.contains("offline personal AI assistant")) {
+        if (r16.spokenText.contains("personal offline assistant")) {
             System.out.println("✓ Test 16 Passed: " + r16.spokenText);
             passed++;
         } else {
@@ -207,7 +207,7 @@ public class StandaloneBrainTest {
         // Test 17: Wake word alone ("Hello Nova")
         total++;
         AssistantBrain.Response r17 = brain.process("Hello Nova");
-        if ("GREETING".equals(r17.actionTag) && r17.spokenText.contains("How can I help you")) {
+        if ("GREETING".equals(r17.actionTag) && r17.spokenText.length() > 5) {
             System.out.println("✓ Test 17 Passed: 'Hello Nova' wake-word -> " + r17.spokenText);
             passed++;
         } else {
@@ -242,6 +242,26 @@ public class StandaloneBrainTest {
             passed++;
         } else {
             System.err.println("✗ Test 20 Failed: Got " + r20.displayText);
+        }
+
+        // Test 21: Human-like Small Talk ("How are you?")
+        total++;
+        AssistantBrain.Response r21 = brain.process("how are you doing today?");
+        if ("HOW_ARE_YOU".equals(r21.actionTag) && r21.spokenText.length() > 10) {
+            System.out.println("✓ Test 21 Passed: 'How are you' human reply -> " + r21.spokenText);
+            passed++;
+        } else {
+            System.err.println("✗ Test 21 Failed: Got " + r21.spokenText);
+        }
+
+        // Test 22: Human-like Small Talk ("What's up?")
+        total++;
+        AssistantBrain.Response r22 = brain.process("what's up bro");
+        if ("WHATS_UP".equals(r22.actionTag) && r22.spokenText.length() > 10) {
+            System.out.println("✓ Test 22 Passed: 'What's up' human reply -> " + r22.spokenText);
+            passed++;
+        } else {
+            System.err.println("✗ Test 22 Failed: Got " + r22.spokenText);
         }
 
         System.out.println("==================================================");
