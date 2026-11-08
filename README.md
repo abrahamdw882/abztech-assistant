@@ -4,6 +4,12 @@
 
 ---
 
+<p align="center">
+  <a href="https://github.com/abrahamdw882/abztech-assistant/raw/refs/heads/main/ultron.apk">
+    <img src="https://img.shields.io/badge/DOWNLOAD-ULTRON%20APK-success?style=for-the-badge&logo=android&logoColor=white">
+  </a>
+</p>
+
 ## 🌟 Why Not a Large LLM?
 
 Running a 4B–8B parameter Large Language Model locally on a mobile phone requires 4GB–8GB of RAM, causes phone overheating, drains battery rapidly, and takes 5–15 seconds to reply.
