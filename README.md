@@ -186,8 +186,10 @@ java -cp "test-standalone/build;app/src/main/java" com.abztech.assistant.Standal
 ✓ Test 29 Passed: 'tell me the battery percentage' -> [BATTERY: 85%]
 ✓ Test 30 Passed: Identity contains Ultron -> I'm Ultron, your personal offline assistant, built by AbzTech. I live directly on your phone and run 100% offline.
 ✓ Test 31 Passed: 'Hey Ultron, what's my battery percent?' -> [BATTERY: 85%]
+✓ Test 32 Passed: Suggestion Chip 'Turn on Flashlight' -> [FLASHLIGHT: ON]
+✓ Test 33 Passed: Suggestion Chip 'Turn off Flashlight' -> [FLASHLIGHT: OFF]
 ==================================================
-RESULTS: 31 / 31 TESTS PASSED (100% OFFLINE)
+RESULTS: 33 / 33 TESTS PASSED (100% OFFLINE)
 ==================================================
 ```
 

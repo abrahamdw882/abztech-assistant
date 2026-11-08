@@ -111,14 +111,16 @@ public class MainActivity extends AppCompatActivity implements
                 "Display Over Screen",
                 "How are you?",
                 "What's up?",
-                "Flashlight",
+                "Turn on Flashlight",
+                "Turn off Flashlight",
                 "Open YouTube",
+                "Close YouTube",
                 "Open WhatsApp",
-                "Battery Status",
+                "What's my battery percent?",
+                "Go to Home Screen",
                 "Set 5m Timer",
                 "15% of 240",
-                "Tell a Joke",
-                "Fun Fact"
+                "Tell a Joke"
         };
 
         chipGroupSuggestions.removeAllViews();

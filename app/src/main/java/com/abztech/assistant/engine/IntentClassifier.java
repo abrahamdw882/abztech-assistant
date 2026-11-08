@@ -74,7 +74,7 @@ public class IntentClassifier {
         if (matchesAny(text, ".*(turn\\s+off\\s+(the\\s+)?(flashlight|torch)|torch\\s+off|flashlight\\s+off|disable\\s+(flashlight|torch)).*")) {
             return new IntentResult(IntentType.FLASHLIGHT_OFF, 1.0f, rawText);
         }
-        if (matchesAny(text, ".*(toggle\\s+(the\\s+)?(flashlight|torch)|flash\\s*light|torch).*") && text.contains("toggle")) {
+        if (matchesAny(text, "^(toggle\\s+(?:the\\s+)?(?:flashlight|torch)|flashlight|torch|flash\\s*light)$") || (text.contains("toggle") && (text.contains("flashlight") || text.contains("torch")))) {
             return new IntentResult(IntentType.FLASHLIGHT_TOGGLE, 1.0f, rawText);
         }
 

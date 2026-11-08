@@ -98,7 +98,7 @@ public class StandaloneBrainTest {
 
         // Test 6: Hardware - Flashlight ON
         total++;
-        AssistantBrain.Response r6 = brain.process("Hey Siri, turn on flashlight");
+        AssistantBrain.Response r6 = brain.process("Hey Ultron, turn on flashlight");
         if (mockActions.torch && "TORCH_ON".equals(r6.actionTag)) {
             System.out.println("✓ Test 6 Passed: " + r6.displayText);
             passed++;
@@ -176,9 +176,9 @@ public class StandaloneBrainTest {
             System.err.println("✗ Test 13 Failed: Got " + r13.displayText);
         }
 
-        // Test 14: Siri Hotword Normalization
+        // Test 14: Ultron Hotword Normalization
         total++;
-        AssistantBrain.Response r14 = brain.process("Hey Siri, turn off torch");
+        AssistantBrain.Response r14 = brain.process("Hey Ultron, turn off torch");
         if (!mockActions.torch && "TORCH_OFF".equals(r14.actionTag)) {
             System.out.println("✓ Test 14 Passed: " + r14.displayText);
             passed++;
@@ -354,6 +354,26 @@ public class StandaloneBrainTest {
             passed++;
         } else {
             System.err.println("✗ Test 31 Failed: Got " + r31.displayText);
+        }
+
+        // Test 32: Suggestion Chip "Turn on Flashlight"
+        total++;
+        AssistantBrain.Response r32 = brain.process("Turn on Flashlight");
+        if (mockActions.torch && "TORCH_ON".equals(r32.actionTag)) {
+            System.out.println("✓ Test 32 Passed: Suggestion Chip 'Turn on Flashlight' -> " + r32.displayText);
+            passed++;
+        } else {
+            System.err.println("✗ Test 32 Failed: Got " + r32.displayText);
+        }
+
+        // Test 33: Suggestion Chip "Turn off Flashlight"
+        total++;
+        AssistantBrain.Response r33 = brain.process("Turn off Flashlight");
+        if (!mockActions.torch && "TORCH_OFF".equals(r33.actionTag)) {
+            System.out.println("✓ Test 33 Passed: Suggestion Chip 'Turn off Flashlight' -> " + r33.displayText);
+            passed++;
+        } else {
+            System.err.println("✗ Test 33 Failed: Got " + r33.displayText);
         }
 
         System.out.println("==================================================");
