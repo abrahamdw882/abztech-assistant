@@ -279,7 +279,7 @@ public class ActionDispatcher implements IActionDispatcher {
     public boolean setTimer(int seconds) {
         Intent intent = new Intent(AlarmClock.ACTION_SET_TIMER);
         intent.putExtra(AlarmClock.EXTRA_LENGTH, seconds);
-        intent.putExtra(AlarmClock.EXTRA_MESSAGE, "Ultron Timer");
+        intent.putExtra(AlarmClock.EXTRA_MESSAGE, "Amara Timer");
         intent.putExtra(AlarmClock.EXTRA_SKIP_UI, false);
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         if (intent.resolveActivity(context.getPackageManager()) != null) {

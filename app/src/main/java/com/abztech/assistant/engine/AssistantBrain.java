@@ -84,8 +84,8 @@ public class AssistantBrain {
 
             case IDENTITY:
                 return new Response(
-                        "I'm Ultron, your personal offline assistant, built by AbzTech. I live directly on your phone and run 100% offline.",
-                        "I'm Ultron, your personal offline assistant, built by AbzTech. I live directly on your phone and run 100% offline.",
+                        "I'm Amara, your personal offline assistant, built by AbzTech. I live directly on your phone and run 100% offline.",
+                        "I'm Amara, your personal offline assistant, built by AbzTech. I live directly on your phone and run 100% offline.",
                         "IDENTITY"
                 );
 
@@ -406,7 +406,7 @@ public class AssistantBrain {
             if (isPm && hour < 12) hour += 12;
             if (isAm && hour == 12) hour = 0;
 
-            if (actionDispatcher != null && actionDispatcher.setAlarm(hour, min, "Ultron Alarm")) {
+            if (actionDispatcher != null && actionDispatcher.setAlarm(hour, min, "Amara Alarm")) {
                 return new Response(String.format(Locale.getDefault(), "Alarm set for %02d:%02d.", hour, min),
                         String.format(Locale.getDefault(), "[ALARM: %02d:%02d]", hour, min), "ALARM");
             }

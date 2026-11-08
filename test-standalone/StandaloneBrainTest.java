@@ -34,7 +34,7 @@ public class StandaloneBrainTest {
 
     public static void main(String[] args) {
         System.out.println("==================================================");
-        System.out.println("   ULTRON OFFLINE AI ASSISTANT - ENGINE TEST     ");
+        System.out.println("    AMARA OFFLINE AI ASSISTANT - ENGINE TEST      ");
         System.out.println("==================================================");
 
         MockActionDispatcher mockActions = new MockActionDispatcher();
@@ -98,7 +98,7 @@ public class StandaloneBrainTest {
 
         // Test 6: Hardware - Flashlight ON
         total++;
-        AssistantBrain.Response r6 = brain.process("Hey Ultron, turn on flashlight");
+        AssistantBrain.Response r6 = brain.process("Hey Amara, turn on flashlight");
         if (mockActions.torch && "TORCH_ON".equals(r6.actionTag)) {
             System.out.println("✓ Test 6 Passed: " + r6.displayText);
             passed++;
@@ -176,9 +176,9 @@ public class StandaloneBrainTest {
             System.err.println("✗ Test 13 Failed: Got " + r13.displayText);
         }
 
-        // Test 14: Ultron Hotword Normalization
+        // Test 14: Amara Hotword Normalization
         total++;
-        AssistantBrain.Response r14 = brain.process("Hey Ultron, turn off torch");
+        AssistantBrain.Response r14 = brain.process("Hey Amara, turn off torch");
         if (!mockActions.torch && "TORCH_OFF".equals(r14.actionTag)) {
             System.out.println("✓ Test 14 Passed: " + r14.displayText);
             passed++;
@@ -306,11 +306,11 @@ public class StandaloneBrainTest {
             System.err.println("✗ Test 26 Failed: Got " + r26.displayText);
         }
 
-        // Test 27: Ultron Wake Word ("Hey Ultron")
+        // Test 27: Amara Wake Word ("Hey Amara")
         total++;
-        AssistantBrain.Response r27 = brain.process("Hey Ultron");
+        AssistantBrain.Response r27 = brain.process("Hey Amara");
         if (r27.intentType == IntentType.WAKE_WORD && "LISTENING".equals(r27.actionTag)) {
-            System.out.println("✓ Test 27 Passed: 'Hey Ultron' wake-word -> " + r27.spokenText);
+            System.out.println("✓ Test 27 Passed: 'Hey Amara' wake-word -> " + r27.spokenText);
             passed++;
         } else {
             System.err.println("✗ Test 27 Failed: Got " + r27.spokenText);
@@ -336,21 +336,21 @@ public class StandaloneBrainTest {
             System.err.println("✗ Test 29 Failed: Got " + r29.displayText);
         }
 
-        // Test 30: Ultron Identity Persona
+        // Test 30: Amara Identity Persona
         total++;
         AssistantBrain.Response r30 = brain.process("who are you?");
-        if (r30.spokenText.contains("Ultron")) {
-            System.out.println("✓ Test 30 Passed: Identity contains Ultron -> " + r30.spokenText);
+        if (r30.spokenText.contains("Amara")) {
+            System.out.println("✓ Test 30 Passed: Identity contains Amara -> " + r30.spokenText);
             passed++;
         } else {
             System.err.println("✗ Test 30 Failed: Got " + r30.spokenText);
         }
 
-        // Test 31: Hands-free Ultron Battery Query ("Hey Ultron, what's my battery percent?")
+        // Test 31: Hands-free Amara Battery Query ("Hey Amara, what's my battery percent?")
         total++;
-        AssistantBrain.Response r31 = brain.process("Hey Ultron, what's my battery percent?");
+        AssistantBrain.Response r31 = brain.process("Hey Amara, what's my battery percent?");
         if ("BATTERY".equals(r31.actionTag) && r31.spokenText.contains("85 percent")) {
-            System.out.println("✓ Test 31 Passed: 'Hey Ultron, what's my battery percent?' -> " + r31.displayText);
+            System.out.println("✓ Test 31 Passed: 'Hey Amara, what's my battery percent?' -> " + r31.displayText);
             passed++;
         } else {
             System.err.println("✗ Test 31 Failed: Got " + r31.displayText);

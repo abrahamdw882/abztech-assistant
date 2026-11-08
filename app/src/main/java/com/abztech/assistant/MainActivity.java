@@ -274,7 +274,7 @@ public class MainActivity extends AppCompatActivity implements
             mainHandler.post(() -> {
                 String tag = (response.actionTag != null && !response.actionTag.isEmpty())
                         ? response.actionTag
-                        : "ULTRON";
+                        : "AMARA";
                 setDialogue(tag, response.displayText);
 
                 lastBotSpokenText = response.spokenText != null ? response.spokenText : "";
@@ -290,7 +290,7 @@ public class MainActivity extends AppCompatActivity implements
 
     private void setDialogue(String speaker, String text) {
         if (textSpeakerTag != null) {
-            textSpeakerTag.setText(speaker != null ? speaker.toUpperCase() : "ULTRON");
+            textSpeakerTag.setText(speaker != null ? speaker.toUpperCase() : "AMARA");
         }
         if (textDialogue != null) {
             textDialogue.setText(text);

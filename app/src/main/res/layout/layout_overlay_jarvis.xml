@@ -97,7 +97,7 @@
             android:gravity="center"
             android:maxLines="5"
             android:ellipsize="end"
-            android:text="Say &quot;Hey Ultron&quot; to begin"
+            android:text="Say &quot;Hey Amara&quot; to begin"
             android:textColor="@color/text_primary"
             android:textSize="15sp"
             android:lineSpacingExtra="3dp"

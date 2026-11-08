@@ -1,12 +1,12 @@
-# Ultron Assistant — Offline AI Assistant for Android (Java)
+# Amara Assistant — Offline AI Assistant for Android (Java)
 
-**Ultron Assistant** is a fast, lightweight, and completely **offline** AI voice assistant for Android built entirely in **pure Java**. Designed with a futuristic Arc Reactor holographic HUD, system-wide floating overlay mode, instant offline speech recognition, app launching & closing, device hardware controls, math calculations, local voice notes, and encyclopedic knowledge—**running 100% locally with zero internet connection and zero battery-draining Large Language Models (LLMs)**.
+**Amara Assistant** is a fast, lightweight, and completely **offline** AI voice assistant for Android built entirely in **pure Java**. Designed with a futuristic Arc Reactor holographic HUD, system-wide floating overlay mode, instant offline speech recognition, app launching & closing, device hardware controls, math calculations, local voice notes, and encyclopedic knowledge—**running 100% locally with zero internet connection and zero battery-draining Large Language Models (LLMs)**.
 
 ---
 
 <p align="center">
-  <a href="https://github.com/abrahamdw882/abztech-assistant/raw/refs/heads/main/ultron.apk">
-    <img src="https://img.shields.io/badge/DOWNLOAD-ULTRON%20APK-success?style=for-the-badge&logo=android&logoColor=white">
+  <a href="https://github.com/abrahamdw882/abztech-assistant/raw/refs/heads/main/amara.apk">
+    <img src="https://img.shields.io/badge/DOWNLOAD-AMARA%20APK-success?style=for-the-badge&logo=android&logoColor=white">
   </a>
 </p>
 
@@ -14,7 +14,7 @@
 
 Running a 4B–8B parameter Large Language Model locally on a mobile phone consumes 4GB–8GB of RAM, generates excessive device heat, drains battery rapidly, and introduces a 5–15 second response delay.
 
-Instead, **Ultron Assistant** uses a **high-speed, multi-layer Natural Language Understanding (NLU) pipeline** that operates deterministically and instantaneously:
+Instead, **Amara Assistant** uses a **high-speed, multi-layer Natural Language Understanding (NLU) pipeline** that operates deterministically and instantaneously:
 - **Deterministic Intent Classifier & Slot Extractor**: Parses commands and extracts parameters in **< 1 millisecond**.
 - **Fuzzy Matcher**: Tolerates speech-to-text transcription typos and phonetic variations using Levenshtein distance.
 - **Context Memory**: Tracks conversational state across turns (e.g. *"What is 25 times 4?"* → *"100"* → *"Add 50 to that"* → *"150"*).
@@ -35,7 +35,7 @@ Instead, **Ultron Assistant** uses a **high-speed, multi-layer Natural Language 
 
 | Category | Sample Voice Commands | Executed Action |
 | :--- | :--- | :--- |
-| **Wake Word & Persona** | *"Hey Ultron"*, *"Ultron"*, *"Who are you?"* | Wakes up assistant and announces Ultron identity |
+| **Wake Word & Persona** | *"Hey Amara"*, *"Amara"*, *"Who are you?"* | Wakes up assistant and announces Amara identity |
 | **Battery & Power** | *"What's my battery percent?"*, *"Tell me the battery percentage"*, *"Is it charging?"* | Reads device capacity via `BatteryManager` and sticky broadcast |
 | **App Launcher** | *"Open WhatsApp"*, *"Launch Camera"*, *"Open YouTube"*, *"Open Settings"* | Scans installed apps and launches package via `PackageManager` |
 | **App Closer & Home** | *"Close YouTube"*, *"Close this app"*, *"Exit"*, *"Go to home screen"* | Kills app background processes and returns to home screen |
@@ -99,11 +99,11 @@ abztech assistant/
 │               │   └── layout_overlay_jarvis.xml # Floating Arc Reactor card overlay layout
 │               ├── values/
 │               │   ├── colors.xml                # Arc Reactor cyan, deep blue, dark theme
-│               │   ├── strings.xml               # App strings (Ultron)
+│               │   ├── strings.xml               # App strings (Amara)
 │               │   └── themes.xml                # Material DayNight dark theme
 │               └── drawable/                     # Custom vector icons and HUD backgrounds
 ├── test-standalone/
-│   └── StandaloneBrainTest.java                  # Standalone offline AI verification test suite (31 tests)
+│   └── StandaloneBrainTest.java                  # Standalone offline AI verification test suite (33 tests)
 ├── .github/workflows/
 │   └── build-apk.yml                             # Automated GitHub Actions APK build & CI testing
 ├── build.gradle                                  # Root buildscript
@@ -116,10 +116,10 @@ abztech assistant/
 ## How to Build the APK
 
 ### Method 1: GitHub Actions CI (Fastest)
-Every push to `main` automatically runs all 31 offline tests and builds a debug APK.
+Every push to `main` automatically runs all 33 offline tests and builds a debug APK.
 1. Go to the **Actions** tab on your GitHub repository: `abztech-assistant`.
 2. Click the latest **Build Android APK** workflow run.
-3. Download the **`Ultron-Assistant-Debug-APK`** artifact zip containing `app-debug.apk`.
+3. Download the **`Amara-Assistant-Debug-APK`** artifact zip containing `app-debug.apk`.
 
 ### Method 2: Using Android Studio
 1. Open **Android Studio**.
@@ -140,7 +140,7 @@ Every push to `main` automatically runs all 31 offline tests and builds a debug 
 
 ## Testing the Offline Brain Without an Android Device
 
-The core reasoning engine (`AssistantBrain`, `IntentClassifier`, `MathEvaluator`, `OfflineKnowledgeBase`, `ContextMemory`) is decoupled from Android hardware dependencies. You can compile and run the full 31-test standalone suite locally on any computer using standard `javac` and `java`:
+The core reasoning engine (`AssistantBrain`, `IntentClassifier`, `MathEvaluator`, `OfflineKnowledgeBase`, `ContextMemory`) is decoupled from Android hardware dependencies. You can compile and run the full 33-test standalone suite locally on any computer using standard `javac` and `java`:
 
 ```powershell
 # 1. Compile the offline engine and test harness
@@ -153,7 +153,7 @@ java -cp "test-standalone/build;app/src/main/java" com.abztech.assistant.Standal
 **Output**:
 ```
 ==================================================
-   ULTRON OFFLINE AI ASSISTANT - ENGINE TEST     
+    AMARA OFFLINE AI ASSISTANT - ENGINE TEST      
 ==================================================
 ✓ Test 1 Passed: 25 * 4 -> [RESULT: 100]
 ✓ Test 2 Passed: 15% of 240 -> [RESULT: 36]
@@ -167,25 +167,25 @@ java -cp "test-standalone/build;app/src/main/java" com.abztech.assistant.Standal
 ✓ Test 10 Passed: [TIMER: 10 minutes]
 ✓ Test 11 Passed: [NOTE SAVED: pick up dry cleaning]
 ✓ Test 12 Passed: The capital of France is Paris.
-✓ Test 13 Passed: Joke: Why do Java developers wear glasses? Because they don't C#!
+✓ Test 13 Passed: Joke: Why did the scarecrow win an award? Because he was outstanding in his field!
 ✓ Test 14 Passed: [FLASHLIGHT: OFF]
 ✓ Test 15 Passed: The speed of light in a vacuum is approximately 299,792,458 meters per second, or about 300,000 km/s.
-✓ Test 16 Passed: I'm Ultron, your personal offline assistant, built by AbzTech. I live directly on your phone and run 100% offline.
-✓ Test 17 Passed: 'Hello Nova' wake-word -> Online. What do you need?
+✓ Test 16 Passed: I'm Amara, your personal offline assistant, built by AbzTech. I live directly on your phone and run 100% offline.
+✓ Test 17 Passed: 'Hello Nova' wake-word -> Yes? What's on your mind?
 ✓ Test 18 Passed: 'Hello Nova open YouTube' -> [LAUNCHING: YouTube]
 ✓ Test 19 Passed: 'Hello Nova turn on flashlight' -> [FLASHLIGHT: ON]
 ✓ Test 20 Passed: 'Hey Jarvis, open WhatsApp' -> [LAUNCHING: WhatsApp]
-✓ Test 21 Passed: 'How are you' human reply -> Doing well! Always glad to hear from you. How are things with you?
-✓ Test 22 Passed: 'What's up' human reply -> Just staying ready for whatever you need. What's up with you?
+✓ Test 21 Passed: 'How are you' human reply -> I'm doing great, thanks for asking! How about yourself?
+✓ Test 22 Passed: 'What's up' human reply -> Not a whole lot, keeping things running smoothly. Anything interesting happening?
 ✓ Test 23 Passed: 'Display over screen' -> [OVERLAY: ACTIVE]
 ✓ Test 24 Passed: 'what's today's date' -> Today is Sunday, November 8, 2026.
 ✓ Test 25 Passed: 'close YouTube' -> [CLOSED: YouTube]
 ✓ Test 26 Passed: 'go to home screen' -> [HOME]
-✓ Test 27 Passed: 'Hey Ultron' wake-word -> Yes? What's on your mind?
+✓ Test 27 Passed: 'Hey Amara' wake-word -> Go ahead, I'm listening.
 ✓ Test 28 Passed: 'whats my battery percent' -> [BATTERY: 85%]
 ✓ Test 29 Passed: 'tell me the battery percentage' -> [BATTERY: 85%]
-✓ Test 30 Passed: Identity contains Ultron -> I'm Ultron, your personal offline assistant, built by AbzTech. I live directly on your phone and run 100% offline.
-✓ Test 31 Passed: 'Hey Ultron, what's my battery percent?' -> [BATTERY: 85%]
+✓ Test 30 Passed: Identity contains Amara -> I'm Amara, your personal offline assistant, built by AbzTech. I live directly on your phone and run 100% offline.
+✓ Test 31 Passed: 'Hey Amara, what's my battery percent?' -> [BATTERY: 85%]
 ✓ Test 32 Passed: Suggestion Chip 'Turn on Flashlight' -> [FLASHLIGHT: ON]
 ✓ Test 33 Passed: Suggestion Chip 'Turn off Flashlight' -> [FLASHLIGHT: OFF]
 ==================================================

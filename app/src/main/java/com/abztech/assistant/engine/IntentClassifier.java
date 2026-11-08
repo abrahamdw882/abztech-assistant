@@ -24,11 +24,11 @@ public class IntentClassifier {
         String text = rawText.trim().toLowerCase(Locale.ROOT);
         text = text.replaceAll("[?!.,]+$", "").trim();
 
-        // Normalize Siri / Nova / Jarvis / Ultron hotwords or prefixes (e.g. "hello ultron", "hey ultron", "ultron", "wake up")
-        text = text.replaceAll("^(?:hey\\s+|ok\\s+|hello\\s+|hi\\s+)?(?:ultron|siri|nova|jarvis|assistant|computer)\\s*,?\\s*", "").trim();
+        // Normalize Amara / Siri / Nova / Jarvis hotwords or prefixes (e.g. "hello amara", "hey amara", "amara", "wake up")
+        text = text.replaceAll("^(?:hey\\s+|ok\\s+|hello\\s+|hi\\s+)?(?:amara|ultron|siri|nova|jarvis|assistant|computer)\\s*,?\\s*", "").trim();
         text = text.replaceAll("^(?:wake\\s+up|listen\\s+up|are\\s+you\\s+there)\\s*,?\\s*", "").trim();
         text = text.replaceAll("[?!.,]+$", "").trim();
-        if (text.isEmpty() || matchesAny(text, "^(ultron|jarvis|nova|siri)$")) {
+        if (text.isEmpty() || matchesAny(text, "^(amara|ultron|jarvis|nova|siri)$")) {
             return new IntentResult(IntentType.WAKE_WORD, 1.0f, rawText);
         }
 
@@ -178,7 +178,7 @@ public class IntentClassifier {
             }
 
             // Extract original casing from rawText if possible
-            Pattern rawAppPattern = Pattern.compile("(?i)^(?:hey\\s+|ok\\s+|hello\\s+|hi\\s+)?(?:ultron|siri|nova|jarvis|assistant)?\\s*,?\\s*(?:please\\s+|can\\s+you\\s+|could\\s+you\\s+)?(?:open\\s+up|open|launch|start|run|play)\\s+(?:the\\s+app\\s+|the\\s+application\\s+|app\\s+)?([a-zA-Z0-9 ._'-]+)[?!.,]*$");
+            Pattern rawAppPattern = Pattern.compile("(?i)^(?:hey\\s+|ok\\s+|hello\\s+|hi\\s+)?(?:amara|ultron|siri|nova|jarvis|assistant)?\\s*,?\\s*(?:please\\s+|can\\s+you\\s+|could\\s+you\\s+)?(?:open\\s+up|open|launch|start|run|play)\\s+(?:the\\s+app\\s+|the\\s+application\\s+|app\\s+)?([a-zA-Z0-9 ._'-]+)[?!.,]*$");
             Matcher rawAppMatcher = rawAppPattern.matcher(rawText.trim());
             String targetApp = (rawAppMatcher.find()) ? rawAppMatcher.group(1).trim() : targetAppLower;
 
@@ -198,7 +198,7 @@ public class IntentClassifier {
                 return new IntentResult(IntentType.CLOSE_APP, 1.0f, rawText).putSlot("appName", "current app");
             }
 
-            Pattern rawAppPattern = Pattern.compile("(?i)^(?:hey\\s+|ok\\s+|hello\\s+|hi\\s+)?(?:ultron|siri|nova|jarvis|assistant)?\\s*,?\\s*(?:please\\s+|can\\s+you\\s+|could\\s+you\\s+)?(?:close\\s+down|close|kill|exit|quit|stop|terminate)\\s+(?:the\\s+app\\s+|the\\s+application\\s+|app\\s+)?([a-zA-Z0-9 ._'-]+)[?!.,]*$");
+            Pattern rawAppPattern = Pattern.compile("(?i)^(?:hey\\s+|ok\\s+|hello\\s+|hi\\s+)?(?:amara|ultron|siri|nova|jarvis|assistant)?\\s*,?\\s*(?:please\\s+|can\\s+you\\s+|could\\s+you\\s+)?(?:close\\s+down|close|kill|exit|quit|stop|terminate)\\s+(?:the\\s+app\\s+|the\\s+application\\s+|app\\s+)?([a-zA-Z0-9 ._'-]+)[?!.,]*$");
             Matcher rawAppMatcher = rawAppPattern.matcher(rawText.trim());
             String targetApp = (rawAppMatcher.find()) ? rawAppMatcher.group(1).trim() : targetAppLower;
 

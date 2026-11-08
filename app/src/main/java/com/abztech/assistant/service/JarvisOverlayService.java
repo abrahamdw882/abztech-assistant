@@ -122,7 +122,7 @@ public class JarvisOverlayService extends Service implements
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && manager != null) {
                 NotificationChannel channel = new NotificationChannel(
                         CHANNEL_ID,
-                        "Ultron Overlay Service",
+                        "Amara Overlay Service",
                         NotificationManager.IMPORTANCE_LOW
                 );
                 channel.setDescription("Keeps the floating Arc Reactor assistant responsive over other apps.");
@@ -139,7 +139,7 @@ public class JarvisOverlayService extends Service implements
             );
 
             Notification notification = new NotificationCompat.Builder(this, CHANNEL_ID)
-                    .setContentTitle("Ultron Floating Assistant")
+                    .setContentTitle("Amara Floating Assistant")
                     .setContentText("Displaying over screen. Tap to open full app.")
                     .setSmallIcon(R.mipmap.ic_launcher)
                     .setContentIntent(pendingIntent)
@@ -160,7 +160,7 @@ public class JarvisOverlayService extends Service implements
         } catch (Exception e) {
             try {
                 Notification notification = new NotificationCompat.Builder(this, CHANNEL_ID)
-                        .setContentTitle("Ultron Assistant")
+                        .setContentTitle("Amara Assistant")
                         .setSmallIcon(R.mipmap.ic_launcher)
                         .build();
                 startForeground(NOTIFICATION_ID, notification);
@@ -291,7 +291,7 @@ public class JarvisOverlayService extends Service implements
             mainHandler.post(() -> {
                 String tag = (response.actionTag != null && !response.actionTag.isEmpty())
                         ? response.actionTag
-                        : "ULTRON";
+                        : "AMARA";
                 setDialogue(tag, response.displayText);
                 lastBotSpokenText = response.spokenText != null ? response.spokenText : "";
                 ttsStartTime = System.currentTimeMillis();
@@ -302,7 +302,7 @@ public class JarvisOverlayService extends Service implements
 
     private void setDialogue(String speaker, String text) {
         if (textSpeakerTag != null) {
-            textSpeakerTag.setText(speaker != null ? speaker.toUpperCase() : "ULTRON");
+            textSpeakerTag.setText(speaker != null ? speaker.toUpperCase() : "AMARA");
         }
         if (textDialogue != null) {
             textDialogue.setText(text);
