@@ -10,6 +10,11 @@
   </a>
 </p>
 
+<br>
+<p align="center">
+  <img src="https://i.ibb.co/4nhKvz43/amara-apppic.jpg" alt="Amara App" width="300">
+</p>
+
 ## Why Not a Heavy LLM?
 
 Running a 4B–8B parameter Large Language Model locally on a mobile phone consumes 4GB–8GB of RAM, generates excessive device heat, drains battery rapidly, and introduces a 5–15 second response delay.
